@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Kaushar Investment</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: var(--black); }
+    .admin-login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .admin-login-box {
+      background: var(--dark);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 44px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .admin-login-box .admin-logo {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--orange);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .admin-login-box h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .admin-login-box p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 28px;
+    }
+    .admin-login-box .form-group { text-align: left; }
+    .admin-login-err {
+      font-size: 13px;
+      color: #f87171;
+      margin-top: -10px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .admin-header {
+      background: var(--dark);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .admin-header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .admin-header-inner .admin-brand {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--white);
+    }
+    .admin-header-inner .admin-brand span { color: var(--orange); }
+    .btn-logout {
+      padding: 8px 18px;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.5);
+      font-family: 'Open Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-logout:hover { border-color: #f87171; color: #f87171; }
+    .btn-logout svg { width: 14px; height: 14px; }
+    #adminApp { display: none; }
+    #loginScreen { display: flex; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="loginScreen" class="admin-login-wrap">
+  <div class="admin-login-box">
+    <div class="admin-logo">Kaushar Investment</div>
+    <h2>Admin Dashboard</h2>
+    <p>Sign in to manage your products</p>
+
+    <div class="form-group">
+      <label for="adminPass">Password</label>
+      <input type="password" id="adminPass" placeholder="Enter admin password" autocomplete="current-password">
+    </div>
+    <p class="admin-login-err" id="loginErr">Incorrect password. Please try again.</p>
+    <button class="btn-admin-submit" style="width:100%" onclick="handleLogin()">Sign In</button>
+
+    <p style="margin-top:24px;font-size:12px;color:rgba(255,255,255,0.25)">
+      <!-- TODO: Change the password below in the script section (search for ADMIN_PASSWORD) -->
+      Default password: <strong style="color:rgba(255,255,255,0.4)">kaushar2026</strong>
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADMIN APP (hidden until logged in)
+══════════════════════════════════════ -->
+<div id="adminApp">
+
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="admin-brand">Kaushar <span>Admin</span></span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <a href="index.html" target="_blank" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);text-decoration:none;">View Site ↗</a>
+        <button class="btn-logout" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Content -->
+  <div class="admin-page-wrap">
+
+    <!-- Stats -->
+    <div class="admin-stats" id="adminStats">
+      <div class="admin-stat-card">
+        <span class="stat-num" id="statTotal">0</span>
+        <span class="stat-label">Total Products</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="stat-num" id="statSpecials">0</span>
+        <span class="stat-label">On Special</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="stat-num" id="statCats">0</span>
+        <span class="stat-label">Categories</span>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('add')">
+        ＋ Add Product
+      </button>
+      <button class="admin-tab" onclick="switchTab('list')">
+        All Products
+      </button>
+    </div>
+
+    <!-- ── TAB: ADD / EDIT PRODUCT ── -->
+    <div class="admin-tab-panel active" id="tabAdd">
+      <div class="admin-form">
+        <h3 id="formHeading">Add New Product</h3>
+
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label>Product Images <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(up to 8 — first is the main image)</span></label>
+          <div class="img-upload-zone" id="uploadZone" onclick="document.getElementById('imgInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+            <input type="file" id="imgInput" accept="image/*" multiple onchange="handleFileSelect(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <p><strong>Tap to upload images</strong> or drag &amp; drop</p>
+            <p style="font-size:12px;margin-top:6px">JPG, PNG, WEBP • Max 8 images</p>
+          </div>
+          <div class="img-preview-grid" id="imgPreviewGrid"></div>
+        </div>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label for="prodTitle">Product Title *</label>
+          <input type="text" id="prodTitle" placeholder="e.g. Heavy Duty Angle Grinder 850W" maxlength="100">
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="prodDesc">Description *</label>
+          <textarea id="prodDesc" placeholder="Write a full product description. This will show in the product popup when clicked."></textarea>
+        </div>
+
+        <!-- Price row -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="prodPrice">Price *</label>
+            <input type="text" id="prodPrice" placeholder="e.g. P850.00">
+          </div>
+          <div class="form-group">
+            <label for="prodOrigPrice">Original Price <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(if on special)</span></label>
+            <input type="text" id="prodOrigPrice" placeholder="e.g. P1,100.00">
+          </div>
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label>Category *</label>
+          <div class="cat-pills" id="catPills">
+            <button type="button" class="cat-pill" data-cat="hardware" onclick="selectCat('hardware')">Hardware</button>
+            <button type="button" class="cat-pill" data-cat="electronics" onclick="selectCat('electronics')">Electronics</button>
+            <button type="button" class="cat-pill" data-cat="outdoor" onclick="selectCat('outdoor')">Outdoor &amp; Camp</button>
+            <button type="button" class="cat-pill" data-cat="household" onclick="selectCat('household')">Household</button>
+            <button type="button" class="cat-pill" data-cat="vehicle" onclick="selectCat('vehicle')">Vehicle Accessories</button>
+          </div>
+        </div>
+
+        <!-- On Special toggle -->
+        <div class="form-group">
+          <label>On Special</label>
+          <div class="special-toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="prodSpecial">
+              <span class="toggle-track"></span>
+            </label>
+            <span style="font-size:13px;color:rgba(255,255,255,0.5)">Mark this product as a special deal (shows in On Special section on homepage)</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="admin-form-actions">
+          <button class="btn-admin-submit" onclick="submitProduct()">Save Product</button>
+          <button class="btn-admin-cancel" onclick="resetForm()" id="cancelEditBtn" style="display:none">Cancel Edit</button>
+          <button class="btn-admin-cancel" onclick="clearForm()">Clear Form</button>
+        </div>
+
+      </div><!-- /.admin-form -->
+    </div><!-- /#tabAdd -->
+
+    <!-- ── TAB: PRODUCT LIST ── -->
+    <div class="admin-tab-panel" id="tabList">
+      <div class="admin-header-bar">
+        <h3>All Products</h3>
+        <div class="admin-filter-pills">
+          <button class="admin-filter-pill active" data-filter="all" onclick="filterProducts('all', this)">All</button>
+          <button class="admin-filter-pill" data-filter="hardware" onclick="filterProducts('hardware', this)">Hardware</button>
+          <button class="admin-filter-pill" data-filter="electronics" onclick="filterProducts('electronics', this)">Electronics</button>
+          <button class="admin-filter-pill" data-filter="outdoor" onclick="filterProducts('outdoor', this)">Outdoor</button>
+          <button class="admin-filter-pill" data-filter="household" onclick="filterProducts('household', this)">Household</button>
+          <button class="admin-filter-pill" data-filter="vehicle" onclick="filterProducts('vehicle', this)">Vehicle</button>
+          <button class="admin-filter-pill" data-filter="special" onclick="filterProducts('special', this)">Specials</button>
+        </div>
+      </div>
+      <div class="admin-product-list" id="adminProductList"></div>
+    </div><!-- /#tabList -->
+
+  </div><!-- /.admin-page-wrap -->
+
+</div><!-- /#adminApp -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ── TODO: Change this password to something secret ──
+const ADMIN_PASSWORD = 'kaushar2026';
+
+// ── Auth ──
+function handleLogin() {
+  const pass = document.getElementById('adminPass').value;
+  if (pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem('ki_admin_auth', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    initAdmin();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('adminPass').value = '';
+    document.getElementById('adminPass').focus();
+  }
+}
+document.getElementById('adminPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+function handleLogout() {
+  sessionStorage.removeItem('ki_admin_auth');
+  document.getElementById('adminApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminPass').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+}
+// Auto-login if already authenticated in this session
+if (sessionStorage.getItem('ki_admin_auth') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'block';
+}
+
+// ── Product storage (same localStorage key as main site) ──
+function getProducts() {
+  try { return JSON.parse(localStorage.getItem('ki_products') || '[]'); } catch(e) { return []; }
+}
+function saveProducts(products) {
+  localStorage.setItem('ki_products', JSON.stringify(products));
+}
+
+// ── State ──
+let uploadedImages = []; // array of base64 strings
+let selectedCategory = '';
+let editingId = null;
+let currentFilter = 'all';
+
+// ── Init ──
+function initAdmin() {
+  renderStats();
+  renderProductList();
+}
+
+// ── Stats ──
+function renderStats() {
+  const products = getProducts();
+  const specials = products.filter(p => p.special).length;
+  const cats = new Set(products.map(p => p.category)).size;
+  document.getElementById('statTotal').textContent = products.length;
+  document.getElementById('statSpecials').textContent = specials;
+  document.getElementById('statCats').textContent = cats;
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach((t,i) => t.classList.toggle('active', (i === (tab==='add'?0:1))));
+  document.getElementById('tabAdd').classList.toggle('active', tab === 'add');
+  document.getElementById('tabList').classList.toggle('active', tab === 'list');
+  if (tab === 'list') renderProductList();
+}
+
+// ── Category ──
+function selectCat(cat) {
+  selectedCategory = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('selected', p.dataset.cat === cat));
+}
+
+// ── Image handling ──
+function handleFileSelect(e) {
+  addFiles(Array.from(e.target.files));
+  e.target.value = ''; // reset so same files can be re-selected
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  addFiles(files);
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  document.getElementById('uploadZone').classList.remove('drag-over');
+}
+function addFiles(files) {
+  const remaining = 8 - uploadedImages.length;
+  if (remaining <= 0) { showToast('Maximum 8 images allowed', 'error'); return; }
+  const toAdd = files.slice(0, remaining);
+  toAdd.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadedImages.push(e.target.result);
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function removeImage(idx) {
+  uploadedImages.splice(idx, 1);
+  renderPreviews();
+}
+function renderPreviews() {
+  const grid = document.getElementById('imgPreviewGrid');
+  grid.innerHTML = uploadedImages.map((src, i) => `
+    <div class="img-preview-item">
+      <img src="${src}" alt="Image ${i+1}">
+      <button class="img-preview-remove" onclick="removeImage(${i})">×</button>
+      ${i === 0 ? '<span class="img-preview-badge">Main</span>' : ''}
+    </div>
+  `).join('');
+}
+
+// ── Submit ──
+function submitProduct() {
+  const title = document.getElementById('prodTitle').value.trim();
+  const desc = document.getElementById('prodDesc').value.trim();
+  const price = document.getElementById('prodPrice').value.trim();
+  const origPrice = document.getElementById('prodOrigPrice').value.trim();
+  const isSpecial = document.getElementById('prodSpecial').checked;
+
+  // Validation
+  if (!title) { showToast('Please enter a product title', 'error'); document.getElementById('prodTitle').focus(); return; }
+  if (!desc) { showToast('Please enter a description', 'error'); document.getElementById('prodDesc').focus(); return; }
+  if (!price) { showToast('Please enter a price', 'error'); document.getElementById('prodPrice').focus(); return; }
+  if (!selectedCategory) { showToast('Please select a category', 'error'); return; }
+
+  const products = getProducts();
+
+  // Fallback image if no images uploaded
+  const fallbackImg = 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&q=80';
+  const images = uploadedImages.length > 0 ? uploadedImages : [fallbackImg];
+
+  if (editingId) {
+    // Edit existing
+    const idx = products.findIndex(p => p.id === editingId);
+    if (idx !== -1) {
+      products[idx] = {
+        ...products[idx],
+        title, desc, price,
+        originalPrice: origPrice || null,
+        category: selectedCategory,
+        special: isSpecial,
+        image: images[0],
+        images: images
+      };
+      showToast('Product updated!', 'success');
+    }
+    editingId = null;
+  } else {
+    // New product
+    const id = selectedCategory.slice(0,2) + Date.now();
+    products.push({
+      id, category: selectedCategory, title, desc, price,
+      originalPrice: origPrice || null,
+      special: isSpecial,
+      image: images[0],
+      images: images
+    });
+    showToast('Product added successfully!', 'success');
+  }
+
+  saveProducts(products);
+  clearForm();
+  renderStats();
+}
+
+function clearForm() {
+  document.getElementById('prodTitle').value = '';
+  document.getElementById('prodDesc').value = '';
+  document.getElementById('prodPrice').value = '';
+  document.getElementById('prodOrigPrice').value = '';
+  document.getElementById('prodSpecial').checked = false;
+  selectedCategory = '';
+  uploadedImages = [];
+  renderPreviews();
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('formHeading').textContent = 'Add New Product';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  editingId = null;
+}
+
+function resetForm() {
+  clearForm();
+}
+
+// ── Edit ──
+function editProduct(id) {
+  const products = getProducts();
+  const p = products.find(pr => pr.id === id);
+  if (!p) return;
+
+  switchTab('add');
+  editingId = id;
+  document.getElementById('prodTitle').value = p.title;
+  document.getElementById('prodDesc').value = p.desc;
+  document.getElementById('prodPrice').value = p.price;
+  document.getElementById('prodOrigPrice').value = p.originalPrice || '';
+  document.getElementById('prodSpecial').checked = !!p.special;
+  selectedCategory = p.category;
+  document.querySelectorAll('.cat-pill').forEach(pill => pill.classList.toggle('selected', pill.dataset.cat === p.category));
+  uploadedImages = Array.isArray(p.images) ? [...p.images] : (p.image ? [p.image] : []);
+  renderPreviews();
+  document.getElementById('formHeading').textContent = 'Edit Product';
+  document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── Delete ──
+function deleteProduct(id) {
+  if (!confirm('Delete this product? This cannot be undone.')) return;
+  const products = getProducts().filter(p => p.id !== id);
+  saveProducts(products);
+  renderStats();
+  renderProductList();
+  showToast('Product deleted', 'error');
+}
+
+// ── Filter ──
+function filterProducts(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.admin-filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderProductList();
+}
+
+// ── Render product list ──
+const CAT_LABELS = { hardware:'Hardware', electronics:'Electronics', outdoor:'Outdoor & Camp', household:'Household', vehicle:'Vehicle Accessories' };
+
+function renderProductList() {
+  let products = getProducts();
+  if (currentFilter === 'special') products = products.filter(p => p.special);
+  else if (currentFilter !== 'all') products = products.filter(p => p.category === currentFilter);
+
+  const list = document.getElementById('adminProductList');
+  if (!products.length) {
+    list.innerHTML = `<div class="admin-empty">No products found. Add some using the "Add Product" tab.</div>`;
+    return;
+  }
+  list.innerHTML = products.map(p => `
+    <div class="admin-product-item">
+      <img src="${p.image || 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=100&q=60'}" alt="${escHtml(p.title)}" onerror="this.src='https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=100&q=60'">
+      <div class="admin-product-item-info">
+        <strong>${escHtml(p.title)}</strong>
+        <div class="admin-product-item-meta">
+          <span>${escHtml(p.price)}</span>
+          <span class="cat-tag">${CAT_LABELS[p.category] || p.category}</span>
+          ${p.special ? '<span class="special-tag">On Special</span>' : ''}
+          <span>${Array.isArray(p.images) ? p.images.length : 1} img${(Array.isArray(p.images) && p.images.length > 1) ? 's' : ''}</span>
+        </div>
+      </div>
+      <div class="admin-product-item-actions">
+        <button class="btn-admin-edit" onclick="editProduct('${p.id}')">Edit</button>
+        <button class="btn-admin-delete" onclick="deleteProduct('${p.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Toast ──
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = type === 'success'
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  t.innerHTML = icon + msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init on load (if already authenticated) ──
+window.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('ki_admin_auth') === '1') {
+    initAdmin();
+  }
+});
+</script>
+</body>
+</html>
