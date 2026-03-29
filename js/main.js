@@ -388,6 +388,31 @@ function initProductSlider(wrapperId, products) {
 
   wrap.querySelector('.slider-arrow.left')?.addEventListener('click', () => { setWidths(); slide(-1); });
   wrap.querySelector('.slider-arrow.right')?.addEventListener('click', () => { setWidths(); slide(1); });
+
+  // Touch swipe support
+  const viewport = wrap.querySelector('.product-slider-viewport');
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+  viewport.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
+  }, { passive: true });
+  viewport.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (!isSwiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+      isSwiping = true;
+    }
+    if (isSwiping) e.preventDefault();
+  }, { passive: false });
+  viewport.addEventListener('touchend', e => {
+    if (!isSwiping) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) { setWidths(); slide(dx < 0 ? 1 : -1); }
+    isSwiping = false;
+  }, { passive: true });
 }
 
 // ============================================================
@@ -562,13 +587,35 @@ function initHomePage() {
       }
       specSlider.querySelector('.slider-arrow.left')?.addEventListener('click', () => sslide(-1));
       specSlider.querySelector('.slider-arrow.right')?.addEventListener('click', () => sslide(1));
+
+      // Touch swipe support for specials slider
+      const svp = specSlider.querySelector('.product-slider-viewport');
+      let stx = 0, sty = 0, sswiping = false;
+      svp.addEventListener('touchstart', e => { stx = e.touches[0].clientX; sty = e.touches[0].clientY; sswiping = false; }, { passive: true });
+      svp.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - stx;
+        const dy = e.touches[0].clientY - sty;
+        if (!sswiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) sswiping = true;
+        if (sswiping) e.preventDefault();
+      }, { passive: false });
+      svp.addEventListener('touchend', e => {
+        if (!sswiping) return;
+        const dx = e.changedTouches[0].clientX - stx;
+        if (Math.abs(dx) > 40) sslide(dx < 0 ? 1 : -1);
+        sswiping = false;
+      }, { passive: true });
     }
   }
 }
 
-// "View All" scrolls to category bar
+// "View All" scrolls to category bar, centred on screen
 function viewAllProducts() {
-  document.querySelector('.category-bar')?.scrollIntoView({ behavior: 'smooth' });
+  const bar = document.querySelector('.category-bar');
+  if (!bar) return;
+  const rect = bar.getBoundingClientRect();
+  const barCenter = rect.top + window.scrollY + rect.height / 2;
+  const scrollTo = barCenter - window.innerHeight / 2;
+  window.scrollTo({ top: Math.max(0, scrollTo), behavior: 'smooth' });
 }
 
 // ============================================================
