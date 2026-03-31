@@ -11,12 +11,7 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// ── Firebase Config ──
 const firebaseConfig = {
   apiKey: "AIzaSyCY1enWLN0CgkK3S99ieJJUB39FI3xgCA4",
   authDomain: "kaushar-investment.firebaseapp.com",
@@ -29,36 +24,26 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
 const WA_NUMBER = '26771234567';
 
+// ── Product Storage ──
 let _cachedProducts = null;
 
 function getProducts() {
-  return _cachedProducts || JSON.parse(localStorage.getItem('ki_products')||'[]');
+  return _cachedProducts || JSON.parse(localStorage.getItem('ki_products') || '[]');
 }
 
 function saveProducts(products) {
   _cachedProducts = products;
   localStorage.setItem('ki_products', JSON.stringify(products));
-  set(ref(_fbDb, 'products'), products).catch(function(e){ console.warn('Firebase save failed:', e); });
+  if (window._fbDb) {
+    window._fbDb.ref('products').set(products).catch(function(e) {
+      console.warn('Firebase save failed:', e);
+    });
+  }
 }
 
-// Listen for real-time updates from Firebase (syncs across devices)
-onValue(ref(_fbDb, 'products'), function(snapshot) {
-  const data = snapshot.val();
-  if (data && Array.isArray(data)) {
-    _cachedProducts = data;
-    localStorage.setItem('ki_products', JSON.stringify(data));
-    // Refresh the current page view if products are displayed
-    const page = document.body ? document.body.dataset.page : null;
-    if (page === 'home') initHomePage();
-    if (page === 'hardware') { renderCategoryProducts('hardware'); initCategorySearch('hardware'); }
-    if (page === 'electronics') { renderCategoryProducts('electronics'); initCategorySearch('electronics'); }
-    if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
-    if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
-    if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
-  }
-}, { onlyOnce: false });
 function getSettings() { try { return JSON.parse(localStorage.getItem('ki_settings')||'{}'); } catch(e){return{};} }
 function saveSettings(s) { localStorage.setItem('ki_settings', JSON.stringify(s)); }
 
@@ -151,7 +136,6 @@ function removeFromCart(id, skipConfirm) {
 }
 
 function showCartConfirm(id) {
-  // Remove any existing confirm
   document.getElementById('cartConfirmOv')?.remove();
   const ov = document.createElement('div');
   ov.id = 'cartConfirmOv';
@@ -169,7 +153,7 @@ window.forceRemoveFromCart = function(id) {
   removeFromCart(id, true);
 };
 
-
+function updateCartUI() {
   document.querySelectorAll('.cart-badge').forEach(function(b){
     b.textContent = cart.length;
     b.style.display = cart.length > 0 ? 'flex' : 'none';
@@ -296,38 +280,31 @@ function buildSlider(wrapperId, products) {
   wrap.querySelector('.slider-arrow.left')?.addEventListener('click', function(){ setW(); goToPos(pos-1, true); });
   wrap.querySelector('.slider-arrow.right')?.addEventListener('click', function(){ setW(); goToPos(pos+1, true); });
 
-  // True direct-finger swipe: no bounce, no snap-back overshoot
   const vp = wrap.querySelector('.product-slider-viewport');
-  let touchStartX = 0, touchStartTranslate = 0, isTouchDragging = false, touchVertLocked = null;
+  let touchStartX = 0, touchStartY = 0, touchStartTranslate = 0, isTouchDragging = false, touchVertLocked = null;
 
   vp.addEventListener('touchstart', function(e) {
     setW();
     touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
     isTouchDragging = true;
     touchVertLocked = null;
-    // Read current actual translate position
-    const mat = window.WebKitCSSMatrix ? new WebKitCSSMatrix(track.style.transform) : {m41: -(pos*stepW())};
-    touchStartTranslate = mat.m41;
+    try { touchStartTranslate = new WebKitCSSMatrix(track.style.transform).m41; } catch(err) { touchStartTranslate = -(pos*stepW()); }
     track.style.transition = 'none';
   }, {passive: true});
 
   vp.addEventListener('touchmove', function(e) {
     if (!isTouchDragging) return;
     const dx = e.touches[0].clientX - touchStartX;
-    const dy = e.touches[1] ? 0 : (e.touches[0].clientY - (e.touches[0].clientY)); // simplified
-
-    // Determine scroll direction on first significant move
+    const dy = e.touches[0].clientY - touchStartY;
     if (touchVertLocked === null) {
-      const absDx = Math.abs(e.touches[0].clientX - touchStartX);
-      // We need to compare with vertical too — use a stored start Y
-      if (absDx > 5) touchVertLocked = false; // horizontal
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) touchVertLocked = false;
+      else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) touchVertLocked = true;
     }
     if (touchVertLocked === false) {
       e.preventDefault();
-      // Hard limits: don't go past first or last card
       const minX = -(maxPos() * stepW());
-      const maxX = 0;
-      const newX = Math.max(minX, Math.min(maxX, touchStartTranslate + dx));
+      const newX = Math.max(minX, Math.min(0, touchStartTranslate + dx));
       track.style.transform = 'translateX('+newX+'px)';
     }
   }, {passive: false});
@@ -335,10 +312,9 @@ function buildSlider(wrapperId, products) {
   vp.addEventListener('touchend', function(e) {
     if (!isTouchDragging) return;
     isTouchDragging = false;
-    if (touchVertLocked !== false) return; // was vertical scroll, ignore
+    if (touchVertLocked !== false) return;
     const dx = e.changedTouches[0].clientX - touchStartX;
-    // Snap to nearest card position
-    const rawPos = -touchStartTranslate / stepW() - dx / stepW();
+    const rawPos = -(touchStartTranslate + dx) / stepW();
     const snappedPos = dx < -30 ? Math.ceil(rawPos) : dx > 30 ? Math.floor(rawPos) : Math.round(rawPos);
     goToPos(snappedPos, true);
     touchVertLocked = null;
@@ -569,12 +545,11 @@ function renderMList(filter){
       '<button class="btn-admin-delete" onclick="mDelete(\''+escHtml(x.id)+'\')">Delete</button>' +
       '</div></div>';
   }).join('');
-  initDrag(list, filter);
+  initDrag(list);
 }
 
-function initDrag(list, filter){
+function initDrag(list){
   let dragEl=null;
-  // Desktop drag
   list.querySelectorAll('.drag-handle').forEach(function(h){
     h.style.cursor='grab';
     h.addEventListener('mousedown',function(e){
@@ -599,7 +574,6 @@ function initDrag(list, filter){
       document.addEventListener('mousemove',mm);
       document.addEventListener('mouseup',mu);
     });
-    // Touch drag
     h.addEventListener('touchstart',function(e){
       dragEl=h.closest('.admin-product-item');
       dragEl.classList.add('dragging');
@@ -634,7 +608,7 @@ function saveDrag(list){
 window.mEdit=function(id){
   const p=getProducts().find(function(x){return x.id===id;});
   if(!p)return;
-  switchMTab('add');
+  window.switchMTab('add');
   _mEditId=id; _mCat=p.category;
   document.getElementById('mTitle').value=p.title;
   document.getElementById('mDesc').value=p.desc;
@@ -649,7 +623,6 @@ window.mEdit=function(id){
   document.getElementById('mCancelEdit').style.display='inline-flex';
   window.scrollTo({top:0,behavior:'smooth'});
 };
-window.switchMTab = window.switchMTab;
 
 window.mDelete=function(id){
   if(!confirm('Delete this product? Cannot be undone.'))return;
@@ -710,8 +683,6 @@ function renderMPrev(){
 
 function initImgDrag(grid) {
   let dragSrc = null;
-
-  // Desktop drag-and-drop
   grid.querySelectorAll('.img-preview-item').forEach(function(item) {
     item.addEventListener('dragstart', function(e) {
       dragSrc = item;
@@ -733,9 +704,7 @@ function initImgDrag(grid) {
       }
     });
   });
-
-  // Touch drag-and-drop (mobile)
-  let touchDragEl = null, touchClone = null;
+  let touchDragEl = null;
   grid.querySelectorAll('.img-preview-item').forEach(function(item) {
     item.addEventListener('touchstart', function(e) {
       if (e.target.classList.contains('img-preview-remove')) return;
@@ -771,10 +740,8 @@ function initImgDrag(grid) {
 
 function saveImgOrder(grid) {
   const items = [...grid.querySelectorAll('.img-preview-item')];
-  _mImgs = items.map(function(item) {
-    return item.querySelector('img').src;
-  });
-  renderMPrev(); // re-render to update Main badge
+  _mImgs = items.map(function(item) { return item.querySelector('img').src; });
+  renderMPrev();
 }
 window.removeMImg=function(i){_mImgs.splice(i,1);renderMPrev();};
 
@@ -826,7 +793,7 @@ function loadMSettings(){
   if(e('mSpecTitle'))e('mSpecTitle').value=s.special_title||'On Special';
   if(e('mSpecSub'))e('mSpecSub').value=s.special_subtitle||'Selected products at reduced prices — while stock lasts.';
   if(e('mBannerOn'))e('mBannerOn').checked=!!s.special_banner_enabled;
-  toggleMBanner();
+  window.toggleMBanner();
   const cats=['hardware','electronics','outdoor','household','vehicle'];
   cats.forEach(function(cat){
     const inp=e('mCSub_'+cat);
@@ -857,7 +824,6 @@ window.toggleMBanner=function(){
   const w=document.getElementById('mBannerImgWrap');
   if(w)w.style.display=on?'block':'none';
 };
-window.toggleMBanner();
 
 window.handleMBannerUpload=function(inp){
   const file=inp.files[0];
@@ -871,6 +837,26 @@ window.handleMBannerUpload=function(inp){
   };
   r.readAsDataURL(file);
 };
+
+// ── Firebase real-time sync listener ──
+setTimeout(function() {
+  if (window._fbDb) {
+    window._fbDb.ref('products').on('value', function(snapshot) {
+      var data = snapshot.val();
+      if (data && Array.isArray(data) && data.length > 0) {
+        _cachedProducts = data;
+        localStorage.setItem('ki_products', JSON.stringify(data));
+        var page = document.body ? document.body.dataset.page : null;
+        if (page === 'home') initHomePage();
+        if (page === 'hardware') { renderCategoryProducts('hardware'); initCategorySearch('hardware'); }
+        if (page === 'electronics') { renderCategoryProducts('electronics'); initCategorySearch('electronics'); }
+        if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
+        if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
+        if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
+      }
+    });
+  }
+}, 500);
 
 // ============================================================
 // INIT
