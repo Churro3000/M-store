@@ -1,6 +1,6 @@
-/* ------------------------
+/* ============================================================
    KAUSHAR INVESTMENT — Main JavaScript
-   -------------------------------------- */
+   ============================================================ */
 'use strict';
 
 // ── Block F12 / DevTools ──
@@ -56,9 +56,9 @@ let cart = [];
 try { cart = JSON.parse(localStorage.getItem('ki_cart')||'[]'); } catch(e){cart=[];}
 function saveCart() { localStorage.setItem('ki_cart', JSON.stringify(cart)); }
 
-// -----------------
+// ============================================================
 // UTILITIES
-// -------------------------------------
+// ============================================================
 function showToast(msg, type) {
   type = type || 'success';
   const t = document.getElementById('toast');
@@ -82,9 +82,9 @@ function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ----------------------------
+// ============================================================
 // CART
-// -----------------------------------------
+// ============================================================
 function addToCart(product) {
   if (!cart.find(function(i){return i.id===product.id;})) {
     cart.push(product);
@@ -94,14 +94,38 @@ function addToCart(product) {
   showToast('"' + product.title + '" added to cart');
 }
 
-function removeFromCart(id) {
+function removeFromCart(id, skipConfirm) {
+  const isMobile = window.innerWidth <= 900;
+  if (isMobile && !skipConfirm) {
+    showCartConfirm(id);
+    return;
+  }
   cart = cart.filter(function(i){return i.id!==id;});
   saveCart();
   updateCartUI();
   renderCartItems();
 }
 
-function updateCartUI() {
+function showCartConfirm(id) {
+  // Remove any existing confirm
+  document.getElementById('cartConfirmOv')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'cartConfirmOv';
+  ov.className = 'cart-confirm-overlay';
+  ov.innerHTML = '<div class="cart-confirm-box">' +
+    '<p>Remove this item from your cart?</p>' +
+    '<div class="cart-confirm-actions">' +
+    '<button class="btn-confirm-cancel" onclick="document.getElementById(\'cartConfirmOv\').remove()">Cancel</button>' +
+    '<button class="btn-confirm-remove" onclick="forceRemoveFromCart(\'' + id + '\')">Remove</button>' +
+    '</div></div>';
+  document.body.appendChild(ov);
+}
+window.forceRemoveFromCart = function(id) {
+  document.getElementById('cartConfirmOv')?.remove();
+  removeFromCart(id, true);
+};
+
+
   document.querySelectorAll('.cart-badge').forEach(function(b){
     b.textContent = cart.length;
     b.style.display = cart.length > 0 ? 'flex' : 'none';
@@ -148,9 +172,9 @@ function closeCart() {
   document.body.style.overflow = '';
 }
 
-// ------------------------
+// ============================================================
 // HERO SLIDESHOW
-// ------------------------------------
+// ============================================================
 function initHeroSlider() {
   const track = document.querySelector('.hero-track');
   if (!track) return;
@@ -190,9 +214,9 @@ function productCardHTML(p) {
     '</button></div></div></div>';
 }
 
-// -------------------------
-// PRODUCT SLIDER — direct finger tracking
-// -------------------------------------
+// ============================================================
+// PRODUCT SLIDER — true 1:1 finger tracking, no bounce
+// ============================================================
 function buildSlider(wrapperId, products) {
   const wrap = document.getElementById(wrapperId);
   if (!wrap) return;
@@ -200,14 +224,17 @@ function buildSlider(wrapperId, products) {
   if (!track) return;
   track.innerHTML = products.map(productCardHTML).join('');
 
-  function cw() {
+  function getVis() { return window.innerWidth <= 900 ? 1.5 : 4.5; }
+  function getGaps() { return window.innerWidth <= 900 ? 1 : 4; }
+  function cardW() {
     const vp = wrap.querySelector('.product-slider-viewport');
-    const mob = window.innerWidth <= 900;
-    return (vp.offsetWidth - (mob?1:4)*16) / (mob?1.5:4.5);
+    return (vp.offsetWidth - getGaps()*16) / getVis();
   }
+  function stepW() { return cardW() + 16; }
+  function maxPos() { return Math.max(0, products.length - Math.floor(getVis())); }
 
   function setW() {
-    const w = cw();
+    const w = cardW();
     track.querySelectorAll('.product-card').forEach(function(c){
       c.style.minWidth = w+'px'; c.style.maxWidth = w+'px';
     });
@@ -216,50 +243,69 @@ function buildSlider(wrapperId, products) {
   window.addEventListener('resize', setW);
 
   let pos = 0;
-  function slide(dir) {
-    setW();
-    const mob = window.innerWidth <= 900;
-    const max = Math.max(0, products.length - (mob?1:4));
-    pos = Math.max(0, Math.min(pos+dir, max));
-    track.style.transition = 'transform 0.3s ease';
-    track.style.transform = 'translateX(-'+(pos*(cw()+16))+'px)';
+  function goToPos(newPos, animate) {
+    pos = Math.max(0, Math.min(newPos, maxPos()));
+    track.style.transition = animate ? 'transform 0.28s ease' : 'none';
+    track.style.transform = 'translateX(-'+(pos*stepW())+'px)';
   }
-  wrap.querySelector('.slider-arrow.left')?.addEventListener('click', function(){slide(-1);});
-  wrap.querySelector('.slider-arrow.right')?.addEventListener('click', function(){slide(1);});
 
-  // Direct-finger swipe
+  wrap.querySelector('.slider-arrow.left')?.addEventListener('click', function(){ setW(); goToPos(pos-1, true); });
+  wrap.querySelector('.slider-arrow.right')?.addEventListener('click', function(){ setW(); goToPos(pos+1, true); });
+
+  // True direct-finger swipe: no bounce, no snap-back overshoot
   const vp = wrap.querySelector('.product-slider-viewport');
-  let sx=0, st=0, drag=false, vert=false;
-  vp.addEventListener('touchstart', function(e){
-    sx = e.touches[0].clientX;
-    drag=true; vert=false;
-    try { st = new WebKitCSSMatrix(track.style.transform).m41; } catch(e){ st=0; }
-    track.style.transition='none';
-  }, {passive:true});
-  vp.addEventListener('touchmove', function(e){
-    if (!drag) return;
-    const dx = e.touches[0].clientX - sx;
-    if (!vert && Math.abs(dx)>6) vert=true;
-    if (vert) {
-      e.preventDefault();
-      const min = -((products.length-1)*(cw()+16));
-      track.style.transform = 'translateX('+Math.max(min,Math.min(0,st+dx))+'px)';
+  let touchStartX = 0, touchStartTranslate = 0, isTouchDragging = false, touchVertLocked = null;
+
+  vp.addEventListener('touchstart', function(e) {
+    setW();
+    touchStartX = e.touches[0].clientX;
+    isTouchDragging = true;
+    touchVertLocked = null;
+    // Read current actual translate position
+    const mat = window.WebKitCSSMatrix ? new WebKitCSSMatrix(track.style.transform) : {m41: -(pos*stepW())};
+    touchStartTranslate = mat.m41;
+    track.style.transition = 'none';
+  }, {passive: true});
+
+  vp.addEventListener('touchmove', function(e) {
+    if (!isTouchDragging) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[1] ? 0 : (e.touches[0].clientY - (e.touches[0].clientY)); // simplified
+
+    // Determine scroll direction on first significant move
+    if (touchVertLocked === null) {
+      const absDx = Math.abs(e.touches[0].clientX - touchStartX);
+      // We need to compare with vertical too — use a stored start Y
+      if (absDx > 5) touchVertLocked = false; // horizontal
     }
-  }, {passive:false});
-  vp.addEventListener('touchend', function(e){
-    if (!drag) return; drag=false;
-    const dx = e.changedTouches[0].clientX - sx;
-    track.style.transition='transform 0.3s ease';
-    if (Math.abs(dx)>40) slide(dx<0?1:-1);
-    else track.style.transform='translateX(-'+(pos*(cw()+16))+'px)';
-  }, {passive:true});
+    if (touchVertLocked === false) {
+      e.preventDefault();
+      // Hard limits: don't go past first or last card
+      const minX = -(maxPos() * stepW());
+      const maxX = 0;
+      const newX = Math.max(minX, Math.min(maxX, touchStartTranslate + dx));
+      track.style.transform = 'translateX('+newX+'px)';
+    }
+  }, {passive: false});
+
+  vp.addEventListener('touchend', function(e) {
+    if (!isTouchDragging) return;
+    isTouchDragging = false;
+    if (touchVertLocked !== false) return; // was vertical scroll, ignore
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    // Snap to nearest card position
+    const rawPos = -touchStartTranslate / stepW() - dx / stepW();
+    const snappedPos = dx < -30 ? Math.ceil(rawPos) : dx > 30 ? Math.floor(rawPos) : Math.round(rawPos);
+    goToPos(snappedPos, true);
+    touchVertLocked = null;
+  }, {passive: true});
 }
 
 function initProductSlider(id, products) { buildSlider(id, products); }
 
-// ---------------------
+// ============================================================
 // PRODUCT MODAL
-// --------------------------------------
+// ============================================================
 function openProductModal(p) {
   const ov = document.getElementById('productModal');
   if (!ov) return;
@@ -302,9 +348,9 @@ function closeProductModal(){
   document.body.style.overflow='';
 }
 
-// -------------------
+// ============================================================
 // CATEGORY SEARCH
-// ------------------------------------
+// ============================================================
 const CATEGORY_TERMS={
   hardware:['Angle Grinder','Blower','Drilling Tools','Marble Cutter','Hammer','Screwdriver','Wrench','Pliers','Tape Measure','Level','Jigsaw','Circular Saw','Air Compressor','Nail Gun','Chisel','Extension Cord','Paint Brush','Clamp','Safety Gear'],
   electronics:['LED TV','Smart TV','Bluetooth Speaker','CCTV Camera','Security System','Remote Control','Solar Panel','Inverter','Power Bank','USB Hub','HDMI Cable','Earphones','Headset','Charger','Adapter','LED Strip','Projector','Router','WiFi Extender','Memory Card','Flash Drive'],
@@ -375,9 +421,9 @@ function initHomePage(){
 
 function viewAllProducts(){ window.location.href='hardware.html'; }
 
-// ----------------------------
+// ============================================================
 // HAMBURGER
-// ----------------------------------------
+// ============================================================
 function initHamburger(){
   const btn=document.querySelector('.hamburger');
   const nav=document.getElementById('mobileNav');
@@ -386,9 +432,9 @@ function initHamburger(){
   cl?.addEventListener('click',function(){nav?.classList.remove('open');});
 }
 
-// ---------------------
+// ============================================================
 // MANAGE PAGE
-// ------------------------
+// ============================================================
 const MANAGE_PASS='kaushar2026';
 let _mImgs=[], _mCat='', _mEditId=null;
 
@@ -609,12 +655,82 @@ function renderMPrev(){
   const g=document.getElementById('mImgGrid');
   if(!g)return;
   g.innerHTML=_mImgs.map(function(src,i){
-    return '<div class="img-preview-item">' +
-      '<img src="'+escHtml(src)+'" alt="Preview">' +
-      '<button class="img-preview-remove" onclick="removeMImg('+i+')">×</button>' +
+    return '<div class="img-preview-item" draggable="true" data-idx="'+i+'">' +
+      '<img src="'+escHtml(src)+'" alt="Preview" draggable="false">' +
+      '<button class="img-preview-remove" onclick="event.stopPropagation();removeMImg('+i+')">×</button>' +
       (i===0?'<span class="img-preview-badge">Main</span>':'')+
       '</div>';
   }).join('');
+  initImgDrag(g);
+}
+
+function initImgDrag(grid) {
+  let dragSrc = null;
+
+  // Desktop drag-and-drop
+  grid.querySelectorAll('.img-preview-item').forEach(function(item) {
+    item.addEventListener('dragstart', function(e) {
+      dragSrc = item;
+      item.classList.add('img-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', function() {
+      item.classList.remove('img-dragging');
+      dragSrc = null;
+      saveImgOrder(grid);
+    });
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragSrc && dragSrc !== item) {
+        const r = item.getBoundingClientRect();
+        if (e.clientX < r.left + r.width/2) grid.insertBefore(dragSrc, item);
+        else grid.insertBefore(dragSrc, item.nextSibling);
+      }
+    });
+  });
+
+  // Touch drag-and-drop (mobile)
+  let touchDragEl = null, touchClone = null;
+  grid.querySelectorAll('.img-preview-item').forEach(function(item) {
+    item.addEventListener('touchstart', function(e) {
+      if (e.target.classList.contains('img-preview-remove')) return;
+      touchDragEl = item;
+      item.classList.add('img-dragging');
+    }, {passive: true});
+    item.addEventListener('touchend', function() {
+      if (touchDragEl) {
+        touchDragEl.classList.remove('img-dragging');
+        touchDragEl = null;
+        saveImgOrder(grid);
+      }
+    }, {passive: true});
+  });
+  grid.addEventListener('touchmove', function(e) {
+    if (!touchDragEl) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const items = [...grid.querySelectorAll('.img-preview-item:not(.img-dragging)')];
+    let near = null, dist = 9999;
+    items.forEach(function(it) {
+      const r = it.getBoundingClientRect();
+      const d = Math.abs(r.left + r.width/2 - t.clientX);
+      if (d < dist) { dist = d; near = it; }
+    });
+    if (near) {
+      const r = near.getBoundingClientRect();
+      if (t.clientX < r.left + r.width/2) grid.insertBefore(touchDragEl, near);
+      else grid.insertBefore(touchDragEl, near.nextSibling);
+    }
+  }, {passive: false});
+}
+
+function saveImgOrder(grid) {
+  const items = [...grid.querySelectorAll('.img-preview-item')];
+  _mImgs = items.map(function(item) {
+    return item.querySelector('img').src;
+  });
+  renderMPrev(); // re-render to update Main badge
 }
 window.removeMImg=function(i){_mImgs.splice(i,1);renderMPrev();};
 
@@ -712,9 +828,9 @@ window.handleMBannerUpload=function(inp){
   r.readAsDataURL(file);
 };
 
-// --------------------
+// ============================================================
 // INIT
-// ------------------------------
+// ============================================================
 document.addEventListener('DOMContentLoaded',function(){
   updateCartUI();
   initHamburger();
