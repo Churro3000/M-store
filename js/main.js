@@ -11,10 +11,54 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
 
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCY1enWLN0CgkK3S99ieJJUB39FI3xgCA4",
+  authDomain: "kaushar-investment.firebaseapp.com",
+  databaseURL: "https://kaushar-investment-default-rtdb.firebaseio.com",
+  projectId: "kaushar-investment",
+  storageBucket: "kaushar-investment.firebasestorage.app",
+  messagingSenderId: "556274967041",
+  appId: "1:556274967041:web:4554d8a66f295747de5600"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 const WA_NUMBER = '26771234567';
 
-function getProducts() { try { return JSON.parse(localStorage.getItem('ki_products')||'[]'); } catch(e){return[];} }
-function saveProducts(p) { localStorage.setItem('ki_products', JSON.stringify(p)); }
+let _cachedProducts = null;
+
+function getProducts() {
+  return _cachedProducts || JSON.parse(localStorage.getItem('ki_products')||'[]');
+}
+
+function saveProducts(products) {
+  _cachedProducts = products;
+  localStorage.setItem('ki_products', JSON.stringify(products));
+  set(ref(_fbDb, 'products'), products).catch(function(e){ console.warn('Firebase save failed:', e); });
+}
+
+// Listen for real-time updates from Firebase (syncs across devices)
+onValue(ref(_fbDb, 'products'), function(snapshot) {
+  const data = snapshot.val();
+  if (data && Array.isArray(data)) {
+    _cachedProducts = data;
+    localStorage.setItem('ki_products', JSON.stringify(data));
+    // Refresh the current page view if products are displayed
+    const page = document.body ? document.body.dataset.page : null;
+    if (page === 'home') initHomePage();
+    if (page === 'hardware') { renderCategoryProducts('hardware'); initCategorySearch('hardware'); }
+    if (page === 'electronics') { renderCategoryProducts('electronics'); initCategorySearch('electronics'); }
+    if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
+    if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
+    if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
+  }
+}, { onlyOnce: false });
 function getSettings() { try { return JSON.parse(localStorage.getItem('ki_settings')||'{}'); } catch(e){return{};} }
 function saveSettings(s) { localStorage.setItem('ki_settings', JSON.stringify(s)); }
 
