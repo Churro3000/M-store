@@ -27,17 +27,27 @@ window._fbDb = firebase.database(_fbApp);
 
 const WA_NUMBER = '26771234567';
 
-// ── Product Storage ──
+// ── Product Storage — Firebase is source of truth, localStorage is cache ──
 let _cachedProducts = null;
+let _fbInitialised = false; // true once Firebase has responded at least once
 
 function getProducts() {
-  return _cachedProducts || JSON.parse(localStorage.getItem('ki_products') || '[]');
+  // Always return cached (from Firebase) if available
+  if (_cachedProducts !== null) return _cachedProducts;
+  // Fall back to localStorage cache while Firebase loads
+  try {
+    const local = JSON.parse(localStorage.getItem('ki_products') || 'null');
+    if (local && Array.isArray(local) && local.length > 0) return local;
+  } catch(e){}
+  // Absolute last resort — only if Firebase has never responded and localStorage empty
+  return [];
 }
 
 function saveProducts(products) {
   _cachedProducts = products;
   localStorage.setItem('ki_products', JSON.stringify(products));
   if (window._fbDb) {
+    _fbLastSaveTime = Date.now();
     window._fbDb.ref('products').set(products).catch(function(e) {
       console.warn('Firebase save failed:', e);
     });
@@ -85,8 +95,8 @@ const DEFAULT_PRODUCTS = [
   {id:'va002',category:'vehicle',title:'Dash Camera Full HD 1080P',desc:'Full HD 1080P dash camera with 170° wide angle, night vision, loop recording, G-sensor, and 3-inch display. Includes 32GB SD card.',price:'P750.00',image:'https://images.unsplash.com/photo-1558618047-3c7e33c8bfde?w=400&q=80',images:['https://images.unsplash.com/photo-1558618047-3c7e33c8bfde?w=600&q=80'],special:true,featured:true,originalPrice:'P950.00',sortOrder:1},
   {id:'va003',category:'vehicle',title:'Car Phone Mount 360°',desc:'Universal 360° adjustable magnetic car phone mount with extra-strong suction cup. Compatible with all smartphones.',price:'P75.00',image:'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&q=80',images:['https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80'],special:false,featured:false,originalPrice:null,sortOrder:2},
   {id:'va004',category:'vehicle',title:'Tyre Inflator 12V Portable',desc:'Compact 12V portable digital tyre inflator with preset pressure function, auto shutoff, LED light, and universal nozzles.',price:'P420.00',image:'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80',images:['https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=80'],special:false,featured:false,originalPrice:null,sortOrder:3}
-];
-if (!localStorage.getItem('ki_products')) saveProducts(DEFAULT_PRODUCTS);
+// DEFAULT_PRODUCTS are ONLY used as a last resort fallback if Firebase has nothing.
+// They are NEVER auto-saved. Firebase is always the source of truth.
 
 let cart = [];
 try { cart = JSON.parse(localStorage.getItem('ki_cart')||'[]'); } catch(e){cart=[];}
@@ -508,8 +518,9 @@ function refreshMStats(){
 }
 
 window.switchMTab=function(tab){
+  const tabs=['add','list','specials','cats','backup'];
   document.querySelectorAll('.m-tab-btn').forEach(function(b,i){
-    b.classList.toggle('active',['add','list','specials','cats'].indexOf(tab)===i);
+    b.classList.toggle('active', tabs[i] === tab);
   });
   document.querySelectorAll('.m-tab-panel').forEach(function(p){p.classList.remove('active');});
   const panel=document.getElementById('mPanel_'+tab);
@@ -855,25 +866,101 @@ window.handleMBannerUpload=function(inp){
   r.readAsDataURL(file);
 };
 
-// ── Firebase real-time sync listener ──
+// ============================================================
+// BACKUP & RESTORE
+// ============================================================
+window.doBackupDownload = function() {
+  var products = getProducts();
+  if (!products.length) { showToast('No products to back up', 'error'); return; }
+  var payload = JSON.stringify({ version: 1, date: new Date().toISOString(), products: products }, null, 2);
+  var blob = new Blob([payload], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'kaushar-products-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Backup downloaded! Keep it safe.', 'success');
+};
+
+window.doBackupRestore = function(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var status = document.getElementById('backupRestoreStatus');
+  if (status) status.textContent = 'Reading file...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var parsed = JSON.parse(e.target.result);
+      var products = parsed.products || (Array.isArray(parsed) ? parsed : null);
+      if (!products || !products.length) throw new Error('No products found in file');
+      saveProducts(products);
+      _cachedProducts = products;
+      if (status) status.textContent = '✓ ' + products.length + ' products restored successfully!';
+      showToast('✓ ' + products.length + ' products restored!', 'success');
+      refreshMStats();
+      renderMList('all');
+      input.value = '';
+    } catch(err) {
+      if (status) status.textContent = '✗ Invalid backup file. Please use a file downloaded from this system.';
+      showToast('Invalid backup file', 'error');
+    }
+  };
+  reader.readAsText(file);
+};
+
+window.doRestoreDefaults = function() {
+  if (!confirm('This will REPLACE all current products with the default demo products. Are you sure?')) return;
+  saveProducts(DEFAULT_PRODUCTS);
+  _cachedProducts = DEFAULT_PRODUCTS;
+  showToast('Default products restored', 'success');
+  refreshMStats();
+  renderMList('all');
+};
+
+// ── Firebase real-time sync — single source of truth ──
+// We use a flag to prevent the listener from re-rendering on every save we make ourselves
+var _fbLastSaveTime = 0;
+
 setTimeout(function() {
-  if (window._fbDb) {
-    window._fbDb.ref('products').on('value', function(snapshot) {
-      var data = snapshot.val();
-      if (data && Array.isArray(data) && data.length > 0) {
-        _cachedProducts = data;
-        localStorage.setItem('ki_products', JSON.stringify(data));
-        var page = document.body ? document.body.dataset.page : null;
-        if (page === 'home') initHomePage();
-        if (page === 'hardware') { renderCategoryProducts('hardware'); initCategorySearch('hardware'); }
-        if (page === 'electronics') { renderCategoryProducts('electronics'); initCategorySearch('electronics'); }
-        if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
-        if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
-        if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
+  if (!window._fbDb) return;
+
+  window._fbDb.ref('products').on('value', function(snapshot) {
+    var data = snapshot.val();
+    var now = Date.now();
+
+    // If we just saved ourselves within the last 2 seconds, skip re-render to avoid loop
+    if (now - _fbLastSaveTime < 2000) return;
+
+    if (data && Array.isArray(data) && data.length > 0) {
+      // Firebase has real products — use them, never touch defaults
+      _cachedProducts = data;
+      localStorage.setItem('ki_products', JSON.stringify(data));
+    } else if (!_fbInitialised) {
+      // Firebase is empty AND this is the very first load — seed with defaults ONCE
+      // only seed if no local cache either
+      var local = null;
+      try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e){}
+      if (!local || !local.length) {
+        saveProducts(DEFAULT_PRODUCTS);
       }
-    });
-  }
-}, 500);
+    }
+
+    _fbInitialised = true;
+
+    // Re-render current page with fresh data
+    var page = document.body ? document.body.dataset.page : null;
+    if (page === 'home') initHomePage();
+    else if (page === 'hardware') { renderCategoryProducts('hardware'); initCategorySearch('hardware'); }
+    else if (page === 'electronics') { renderCategoryProducts('electronics'); initCategorySearch('electronics'); }
+    else if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
+    else if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
+    else if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
+    else if (page === 'manage') { refreshMStats(); renderMList(window._mFilter || 'all'); }
+  });
+}, 300);
 
 // ============================================================
 // INIT
