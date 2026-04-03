@@ -2,12 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=1024">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0">
   <title>Manage — Kaushar Investment</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="stylesheet" href="css/style.css">
   <style>
     body{background:var(--black);}
+    /* Prevent iOS zoom on input focus — keep font-size at least 16px */
+    .m-form-card input,
+    .m-form-card textarea,
+    .m-form-card select,
+    .m-settings-section input,
+    .m-settings-section textarea { font-size: 16px !important; }
+    body { touch-action: pan-x pan-y pinch-zoom; }
     /* Login */
     .m-login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
     .m-login-box{background:var(--dark);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:44px 36px;width:100%;max-width:380px;text-align:center;}
@@ -106,6 +113,7 @@
       <button class="m-tab-btn" onclick="switchMTab('list')">All Products</button>
       <button class="m-tab-btn" onclick="switchMTab('specials')">Specials Section</button>
       <button class="m-tab-btn" onclick="switchMTab('cats')">Categories</button>
+      <button class="m-tab-btn" onclick="switchMTab('backup')">🔒 Backup</button>
     </div>
 
     <!-- ── TAB: ADD PRODUCT ── -->
@@ -268,12 +276,47 @@
       <button class="btn-admin-submit" onclick="saveMSettings()">Save Category Settings</button>
     </div>
 
+    <!-- ── TAB: BACKUP & RESTORE ── -->
+    <div class="m-tab-panel" id="mPanel_backup">
+      <div class="m-settings-section">
+        <h4>🔒 Backup Your Products</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
+          Download a backup file of all your current products. Keep this file somewhere safe (Google Drive, phone, email to yourself). If anything ever goes wrong and products disappear, you can restore from this file instantly.
+        </p>
+        <button class="btn-admin-submit" onclick="doBackupDownload()" style="margin-bottom:12px;width:100%">
+          ⬇ Download Backup File
+        </button>
+        <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center">Saves as a .json file — do not edit it manually</p>
+      </div>
+
+      <div class="m-settings-section" style="margin-top:16px">
+        <h4>🔁 Restore Products from Backup</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
+          If your products ever disappear, upload your backup file here to restore everything exactly as it was — all products, images, categories, featured and special flags.
+        </p>
+        <div class="img-upload-zone" style="padding:20px" onclick="document.getElementById('backupFileInput').click()">
+          <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="doBackupRestore(this)">
+          <p><strong>Tap to upload backup file</strong></p>
+          <p style="font-size:12px;margin-top:6px;color:rgba(255,255,255,0.35)">.json files only</p>
+        </div>
+        <div id="backupRestoreStatus" style="margin-top:14px;font-size:13px;color:rgba(255,255,255,0.4);text-align:center"></div>
+      </div>
+
+      <div class="m-settings-section" style="margin-top:16px;border:1px solid rgba(239,68,68,0.25)">
+        <h4 style="color:#f87171">⚠️ Emergency: Restore Default Products</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
+          Only use this if you have no backup file and need to start fresh with the demo products. <strong style="color:#f87171">This will replace all current products.</strong>
+        </p>
+        <button class="btn-admin-delete" style="width:100%;padding:14px;font-size:14px" onclick="doRestoreDefaults()">
+          Reset to Default Demo Products
+        </button>
+      </div>
+    </div>
+
   </div><!-- /.m-wrap -->
 </div><!-- /#mApp -->
 
 <div class="toast" id="toast"></div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
