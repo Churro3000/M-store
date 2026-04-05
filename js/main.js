@@ -117,6 +117,11 @@ function escHtml(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// Formats description preserving line breaks
+function fmtDesc(s) {
+  return escHtml(String(s || '')).replace(/\n/g, '<br>');
+}
+
 // ============================================================
 // CART
 // ============================================================
@@ -238,7 +243,7 @@ function productCardHTML(p) {
     '<img class="product-card-img" src="' + escHtml(p.image) + '" alt="' + escHtml(p.title) + '" loading="lazy" onerror="this.src=\'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=60\'">' +
     '</div><div class="product-card-body">' +
     '<div class="product-card-title">' + escHtml(p.title) + '</div>' +
-    '<div class="product-card-desc">' + escHtml(p.desc) + '</div>' +
+    '<div class="product-card-desc">' + fmtDesc(p.desc) + '</div>' +
     '<div class="product-card-price">' + escHtml(p.price) + orig + '</div>' +
     '<div class="product-card-actions">' +
     '<button class="btn-inquire" onclick="event.stopPropagation();whatsappInquire(\'' + safeT + '\')">Inquire</button>' +
@@ -349,7 +354,7 @@ function openProductModal(p) {
     imgs.map(function(s) { return '<div class="modal-img-slide"><img src="' + escHtml(s) + '" alt="' + escHtml(p.title) + '" loading="lazy" onerror="this.src=\'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=60\'"></div>'; }).join('') +
     '</div>' + dots + '</div>' +
     '<div class="modal-info"><h2>' + escHtml(p.title) + '</h2>' +
-    '<p class="full-desc">' + escHtml(p.desc) + '</p>' +
+    '<p class="full-desc">' + fmtDesc(p.desc) + '</p>' +
     '<div class="modal-price">' + escHtml(p.price) + (p.originalPrice ? '<span class="original-price" style="margin-left:10px">' + escHtml(p.originalPrice) + '</span>' : '') + '</div>' +
     '<div class="modal-actions">' +
     '<button class="btn-inquire" onclick="whatsappInquire(\'' + safeT + '\')">Inquire on WhatsApp</button>' +
