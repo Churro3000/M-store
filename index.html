@@ -10,7 +10,7 @@
   <!-- <link rel="icon" href="images/favicon.png"> -->
 </head>
 <body data-page="home">
-
+ 
 <!-- ══════════════════════════════════════
      MOBILE NAV OVERLAY
 ══════════════════════════════════════ -->
@@ -22,7 +22,7 @@
   <a href="about.html">About Us</a>
   <a href="policy.html">Policy</a>
 </nav>
-
+ 
 <!-- ══════════════════════════════════════
      HEADER
 ══════════════════════════════════════ -->
@@ -37,14 +37,14 @@
         <span>(Pty) Ltd</span>
       </div>
     </a>
-
+ 
     <nav class="header-nav">
       <a href="delivery.html">Delivery &amp; Courier</a>
       <a href="contact.html">Contact Us</a>
       <a href="about.html">About Us</a>
       <a href="policy.html">Policy</a>
     </nav>
-
+ 
     <button class="cart-btn" aria-label="Shopping cart" title="View cart">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
         <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -52,13 +52,13 @@
       </svg>
       <span class="cart-badge" id="cartBadge">0</span>
     </button>
-
+ 
     <button class="hamburger" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
   </div>
 </header>
-
+ 
 <!-- ══════════════════════════════════════
      HERO SLIDESHOW
 ══════════════════════════════════════ -->
@@ -134,7 +134,7 @@
     <div class="hero-dot"></div>
   </div>
 </section>
-
+ 
 <!-- ══════════════════════════════════════
      CATEGORY BAR
 ══════════════════════════════════════ -->
@@ -162,7 +162,7 @@
     </a>
   </div>
 </nav>
-
+ 
 <!-- ══════════════════════════════════════
      FEATURED PRODUCTS SLIDESHOW
 ══════════════════════════════════════ -->
@@ -170,7 +170,7 @@
   <div class="section-inner">
     <div class="section-title">Browse Our</div>
     <div class="section-heading">Featured <span>Items</span></div>
-
+ 
     <div class="product-slider-wrap" id="featuredSlider">
       <button class="slider-arrow left" aria-label="Previous">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -182,28 +182,31 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
-
+ 
     <button class="btn-view-all" onclick="viewAllProducts()">View All Products</button>
   </div>
 </section>
-
-<!-- ══════════════════════════════════════
+ 
+<!-- ---------------------------------
+     SPECIALS BANNER (toggled from manage)
+     Sits directly above the specials section, flush against it
+--------------------------------- -->
+<div id="specialBannerWrap" style="display:none;overflow:hidden;max-height:140px;margin-bottom:0;line-height:0;">
+  <img src="" alt="Special Banner" style="width:100%;height:140px;object-fit:cover;display:block;">
+</div>
+ 
+<!-- ---------------------------------
      ON SPECIAL SECTION
-══════════════════════════════════════ -->
+--------------------------------- -->
 <section class="special-section">
   <div class="section-inner">
     <div class="special-tag">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       Current Offers
     </div>
-    <div class="section-heading">On <span id="specialSectionTitle">Special</span></div>
+    <div class="section-heading"><span id="specialSectionTitle">On Special</span></div>
     <p class="special-subtitle" id="specialSectionSub">Selected products at reduced prices — while stock lasts.</p>
-
-    <!-- Optional banner image bar (toggled from manage page) -->
-    <div id="specialBannerWrap" style="display:none;margin-bottom:18px;border-radius:10px;overflow:hidden;max-height:120px;">
-      <img src="" alt="Special Banner" style="width:100%;height:120px;object-fit:cover;display:block;">
-    </div>
-
+ 
     <div class="product-slider-wrap" id="specialSlider">
       <button class="slider-arrow left" aria-label="Previous" style="color:#000;background:#fff;border-color:#fff;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -217,7 +220,7 @@
     </div>
   </div>
 </section>
-
+ 
 <!-- ══════════════════════════════════════
      LOCATION SECTION
 ══════════════════════════════════════ -->
@@ -264,7 +267,7 @@
     </div>
   </div>
 </section>
-
+ 
 <!-- ══════════════════════════════════════
      DELIVERY SECTION (preview on homepage)
 ══════════════════════════════════════ -->
@@ -294,7 +297,7 @@
           Contact for Delivery
         </a>
       </div>
-
+ 
       <!-- Nationwide Courier -->
       <div class="delivery-card">
         <div class="delivery-card-icon">
@@ -310,7 +313,7 @@
     </div>
   </div>
 </section>
-
+ 
 <!-- ══════════════════════════════════════
      CONTACT & FOLLOW SECTION
 ══════════════════════════════════════ -->
@@ -326,7 +329,7 @@
           Message Us on WhatsApp
         </a>
       </div>
-
+ 
       <!-- Follow -->
       <div class="contact-part">
         <h2>Follow <span>Us</span></h2>
@@ -342,7 +345,7 @@
             TikTok
           </a>
         </div>
-
+ 
         <!-- TikTok mobile video mockup -->
         <div class="tiktok-mockup">
           <div class="phone-frame">
@@ -359,7 +362,7 @@
     </div>
   </div>
 </section>
-
+ 
 <!-- ══════════════════════════════════════
      FOOTER
 ══════════════════════════════════════ -->
@@ -402,7 +405,7 @@
     <p><a href="policy.html" style="color:rgba(255,255,255,0.4)">Privacy &amp; Policy</a></p>
   </div>
 </footer>
-
+ 
 <!-- ══════════════════════════════════════
      CART SIDEBAR
 ══════════════════════════════════════ -->
@@ -420,12 +423,12 @@
     </button>
   </div>
 </div>
-
+ 
 <!-- ══════════════════════════════════════
      PRODUCT MODAL
 ══════════════════════════════════════ -->
 <div class="modal-overlay" id="productModal"></div>
-
+ 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
