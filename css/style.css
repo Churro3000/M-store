@@ -1092,27 +1092,32 @@ ul { list-style: none; }
   border-top: 1px solid #eee;
   flex-shrink: 0;
   background: var(--white);
+  display: flex;
+  justify-content: center;
 }
 .btn-inquire-all {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   background: var(--whatsapp);
   color: var(--white);
-  padding: 14px;
+  padding: 12px 24px;
   border-radius: 30px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  width: 100%;
+  width: auto;
+  border: 2px solid rgba(255,255,255,0.35);
   transition: var(--transition);
   box-shadow: 0 4px 18px rgba(37,211,102,0.30);
+  white-space: nowrap;
 }
 .btn-inquire-all:hover {
   background: var(--whatsapp-dark);
+  border-color: rgba(255,255,255,0.55);
   box-shadow: 0 6px 26px rgba(37,211,102,0.45);
 }
-.btn-inquire-all svg { width: 22px; height: 22px; }
+.btn-inquire-all svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 /* ============================================================
    PRODUCT POPUP / MODAL
