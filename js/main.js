@@ -465,7 +465,7 @@ function initHamburger() {
 // ============================================================
 // MANAGE PAGE
 // ============================================================
-const MANAGE_PASS = 'kaushar2026';
+const MANAGE_PASS = 'vita6';
 let _mImgs = [], _mCat = '', _mEditId = null;
 
 function initManage() {
