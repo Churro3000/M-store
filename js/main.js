@@ -9,14 +9,17 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault(); return false;
   }
 });
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+document.addEventListener('contextmenu', function(e) {
+  // Only block right-click on images to prevent saving, allow text copy menu everywhere else
+  if (e.target.tagName === 'IMG') { e.preventDefault(); return false; }
+});
 
 // ── Supabase Config ──
 const SUPABASE_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const WA_NUMBER = '26771665187';
+const WA_NUMBER = '26771234567';
 
 // ── Product Storage — Supabase is source of truth, localStorage is cache ──
 let _cachedProducts = null;
@@ -465,7 +468,7 @@ function initHamburger() {
 // ============================================================
 // MANAGE PAGE
 // ============================================================
-const MANAGE_PASS = 'vita6';
+const MANAGE_PASS = 'kaushar2026';
 let _mImgs = [], _mCat = '', _mEditId = null;
 
 function initManage() {
@@ -493,6 +496,7 @@ window.doLogin = function() {
 
 window.doLogout = function() {
   sessionStorage.removeItem('ki_auth');
+  window._mFormReady = false;
   document.getElementById('mApp').style.display = 'none';
   document.getElementById('mLoginScreen').style.display = 'flex';
 };
@@ -503,7 +507,11 @@ function showMApp() {
   refreshMStats();
   renderMList('all');
   loadMSettings();
-  initMForm();
+  // Only init the form once — re-running it attaches duplicate listeners that break repeated uploads
+  if (!window._mFormReady) {
+    initMForm();
+    window._mFormReady = true;
+  }
 }
 
 function refreshMStats() {
@@ -651,17 +659,11 @@ function initMForm() {
   const zone = document.getElementById('mUploadZone');
   const inp = document.getElementById('mImgInput');
   if (zone) {
-    zone.addEventListener('click', function(e) {
-      // Only trigger file picker if the click is directly on the zone, not bubbling up from the input
-      if (e.target === inp) return;
-      inp?.click();
-    });
+    zone.addEventListener('click', function() { inp?.click(); });
     zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
     zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('drag-over'); addMFiles(Array.from(e.dataTransfer.files)); });
   }
-  // Stop the input's click from bubbling up to the zone (prevents re-opening picker after selection)
-  inp?.addEventListener('click', function(e) { e.stopPropagation(); });
   inp?.addEventListener('change', function(e) { addMFiles(Array.from(e.target.files)); e.target.value = ''; });
   document.querySelectorAll('.m-cat-pill').forEach(function(pill) {
     pill.addEventListener('click', function() {
