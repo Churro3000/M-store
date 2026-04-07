@@ -496,7 +496,6 @@ window.doLogin = function() {
 
 window.doLogout = function() {
   sessionStorage.removeItem('ki_auth');
-  window._mFormReady = false;
   document.getElementById('mApp').style.display = 'none';
   document.getElementById('mLoginScreen').style.display = 'flex';
 };
@@ -507,11 +506,7 @@ function showMApp() {
   refreshMStats();
   renderMList('all');
   loadMSettings();
-  // Only init the form once — re-running it attaches duplicate listeners that break repeated uploads
-  if (!window._mFormReady) {
-    initMForm();
-    window._mFormReady = true;
-  }
+  initMForm();
 }
 
 function refreshMStats() {
@@ -655,26 +650,46 @@ window.mDelete = function(id) {
   showToast('Product deleted', 'error');
 };
 
+// ── FIX: initMForm uses a flag on the elements themselves so listeners
+//    are only ever attached once, no matter how many times it is called.
 function initMForm() {
   const zone = document.getElementById('mUploadZone');
   const inp = document.getElementById('mImgInput');
-  if (zone) {
-    zone.addEventListener('click', function() { inp?.click(); });
+
+  // Guard: only attach listeners once per element lifetime
+  if (zone && !zone._kiListened) {
+    zone._kiListened = true;
+    zone.addEventListener('click', function(e) {
+      // Don't re-open picker when the click came FROM the input itself
+      if (e.target === inp) return;
+      inp && inp.click();
+    });
     zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
     zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('drag-over'); addMFiles(Array.from(e.dataTransfer.files)); });
   }
-  inp?.addEventListener('change', function(e) { addMFiles(Array.from(e.target.files)); e.target.value = ''; });
+
+  if (inp && !inp._kiListened) {
+    inp._kiListened = true;
+    // Stop input click from bubbling to zone (prevents re-opening picker after selection)
+    inp.addEventListener('click', function(e) { e.stopPropagation(); });
+    inp.addEventListener('change', function(e) { addMFiles(Array.from(e.target.files)); e.target.value = ''; });
+  }
+
   document.querySelectorAll('.m-cat-pill').forEach(function(pill) {
+    if (pill._kiListened) return;
+    pill._kiListened = true;
     pill.addEventListener('click', function() {
       _mCat = pill.dataset.cat;
       document.querySelectorAll('.m-cat-pill').forEach(function(p) { p.classList.remove('selected'); });
       pill.classList.add('selected');
     });
   });
+
   ['mPrice', 'mOrigPrice'].forEach(function(id) {
     const el = document.getElementById(id);
-    if (!el) return;
+    if (!el || el._kiListened) return;
+    el._kiListened = true;
     el.addEventListener('input', function() {
       const pos = el.selectionStart;
       const cleaned = el.value.replace(/[^0-9.,]/g, '');
@@ -897,7 +912,6 @@ function loadProductsFromSupabase() {
   _sb.from('products').select('data').limit(1).then(function(res) {
     if (res.error) {
       console.warn('Supabase load failed:', res.error);
-      // Fall back to localStorage or defaults
       if (!_cachedProducts || !_cachedProducts.length) {
         var local = null;
         try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
@@ -917,7 +931,6 @@ function loadProductsFromSupabase() {
         }
       } catch(e) {}
     }
-    // Supabase is empty — seed with defaults once
     var local = null;
     try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
     _cachedProducts = (local && local.length) ? local : DEFAULT_PRODUCTS;
@@ -945,7 +958,6 @@ document.addEventListener('DOMContentLoaded', function() {
   initHamburger();
   initHeroSlider();
 
-  // Load products from Supabase first, then render page
   loadProductsFromSupabase();
 
   const page = document.body.dataset.page;
