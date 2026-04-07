@@ -19,7 +19,7 @@ const SUPABASE_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const WA_NUMBER = '26771234567';
+const WA_NUMBER = '26771665187';
 
 // ── Product Storage — Supabase is source of truth, localStorage is cache ──
 let _cachedProducts = null;
@@ -476,7 +476,7 @@ function initHamburger() {
 // ============================================================
 // MANAGE PAGE
 // ============================================================
-const MANAGE_PASS = 'kaushar2026';
+const MANAGE_PASS = 'vita6';
 let _mImgs = [], _mCat = '', _mEditId = null;
 
 function initManage() {
