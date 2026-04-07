@@ -36,15 +36,23 @@ function getProducts() {
 function saveProducts(products) {
   _cachedProducts = products;
   localStorage.setItem('ki_products', JSON.stringify(products));
-  _sb.from('products').select('id').limit(1).then(function(res) {
-    var data = JSON.stringify(products);
-    if (res.data && res.data.length > 0) {
-      _sb.from('products').update({ data: data }).eq('id', res.data[0].id).then(function(r) {
-        if (r.error) console.warn('Supabase update failed:', r.error);
-      });
-    } else {
-      _sb.from('products').insert({ data: data }).then(function(r) {
-        if (r.error) console.warn('Supabase insert failed:', r.error);
+  // Use upsert with a fixed id=1 row — eliminates the race condition where
+  // concurrent select→insert/update calls created duplicate rows and lost data
+  var data = JSON.stringify(products);
+  _sb.from('products').upsert({ id: 1, data: data }, { onConflict: 'id' }).then(function(r) {
+    if (r.error) {
+      console.warn('Supabase save failed:', r.error);
+      // If upsert fails (e.g. id column not numeric), fall back to the old pattern once
+      _sb.from('products').select('id').limit(1).then(function(res) {
+        if (res.data && res.data.length > 0) {
+          _sb.from('products').update({ data: data }).eq('id', res.data[0].id).then(function(r2) {
+            if (r2.error) console.warn('Supabase fallback update failed:', r2.error);
+          });
+        } else {
+          _sb.from('products').insert({ data: data }).then(function(r2) {
+            if (r2.error) console.warn('Supabase fallback insert failed:', r2.error);
+          });
+        }
       });
     }
   });
@@ -790,6 +798,7 @@ window.submitMProduct = function() {
   saveProducts(products);
   clearMForm();
   refreshMStats();
+  renderMList(window._mFilter || 'all');
 };
 
 function clearMForm() {
@@ -909,7 +918,7 @@ window.doRestoreDefaults = function() {
 // SUPABASE — load products on startup
 // ============================================================
 function loadProductsFromSupabase() {
-  _sb.from('products').select('data').limit(1).then(function(res) {
+  _sb.from('products').select('data').order('id', { ascending: false }).limit(1).then(function(res) {
     if (res.error) {
       console.warn('Supabase load failed:', res.error);
       if (!_cachedProducts || !_cachedProducts.length) {
