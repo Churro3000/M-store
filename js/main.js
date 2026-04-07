@@ -22,10 +22,14 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const WA_NUMBER = '26771665187';
 
 // ── Product Storage — Supabase is source of truth, localStorage is cache ──
-let _cachedProducts = null;
+// FIX: Use undefined (not null) as "not yet loaded" sentinel.
+// null was used as both "not loaded" and a valid empty state, causing
+// getProducts() to return stale [] permanently once Supabase set it to [].
+let _cachedProducts = undefined;
 
 function getProducts() {
-  if (_cachedProducts !== null) return _cachedProducts;
+  // FIX: Only return cache when it has been explicitly populated (not undefined)
+  if (_cachedProducts !== undefined) return _cachedProducts;
   try {
     const local = JSON.parse(localStorage.getItem('ki_products') || 'null');
     if (local && Array.isArray(local) && local.length > 0) return local;
@@ -485,9 +489,17 @@ function initManage() {
     document.getElementById('mApp').style.display = 'none';
     return;
   }
-  showMApp();
+  // FIX: Don't call showMApp() here — Supabase hasn't loaded yet.
+  // showMApp() will be called by refreshCurrentPage() once loadProductsFromSupabase() finishes.
+  // Just show the app shell and init the form so it's ready.
+  document.getElementById('mLoginScreen').style.display = 'none';
+  document.getElementById('mApp').style.display = 'block';
+  loadMSettings();
+  initMForm();
 }
 
+// FIX: Expose doLogin on window immediately (not inside DOMContentLoaded)
+// so the onclick attribute in HTML and the Enter-key listener both find it.
 window.doLogin = function() {
   const passEl = document.getElementById('mPass');
   const errEl = document.getElementById('mLoginErr');
@@ -495,7 +507,13 @@ window.doLogin = function() {
   if (passEl.value === MANAGE_PASS) {
     sessionStorage.setItem('ki_auth', '1');
     document.getElementById('mLoginScreen').style.display = 'none';
-    showMApp();
+    document.getElementById('mApp').style.display = 'block';
+    loadMSettings();
+    initMForm();
+    // FIX: After login, products may already be loaded (Supabase callback
+    // already fired). Refresh stats and list immediately.
+    refreshMStats();
+    renderMList(window._mFilter || 'all');
   } else {
     if (errEl) errEl.style.display = 'block';
     passEl.value = '';
@@ -512,7 +530,7 @@ function showMApp() {
   document.getElementById('mLoginScreen').style.display = 'none';
   document.getElementById('mApp').style.display = 'block';
   refreshMStats();
-  renderMList('all');
+  renderMList(window._mFilter || 'all');
   loadMSettings();
   initMForm();
 }
@@ -785,6 +803,9 @@ window.submitMProduct = function() {
   const origPrice = origRaw ? formatPrice(origRaw) : null;
   const fb = 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=80';
   const imgs = _mImgs.length ? _mImgs : [fb];
+  // FIX: Always get a fresh copy of products at submit time — never rely
+  // on a stale local variable. This ensures new products append to the
+  // real Supabase-loaded list, not to an empty or outdated cache.
   const products = getProducts();
   if (_mEditId) {
     const idx = products.findIndex(function(p) { return p.id === _mEditId; });
@@ -921,7 +942,8 @@ function loadProductsFromSupabase() {
   _sb.from('products').select('data').order('id', { ascending: false }).limit(1).then(function(res) {
     if (res.error) {
       console.warn('Supabase load failed:', res.error);
-      if (!_cachedProducts || !_cachedProducts.length) {
+      // FIX: Only fall back to localStorage/defaults if cache is still empty
+      if (_cachedProducts === undefined) {
         var local = null;
         try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
         _cachedProducts = (local && local.length) ? local : DEFAULT_PRODUCTS;
@@ -940,6 +962,7 @@ function loadProductsFromSupabase() {
         }
       } catch(e) {}
     }
+    // Supabase returned no data — fall back to localStorage or defaults
     var local = null;
     try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
     _cachedProducts = (local && local.length) ? local : DEFAULT_PRODUCTS;
@@ -956,7 +979,15 @@ function refreshCurrentPage() {
   else if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
   else if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
   else if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
-  else if (page === 'manage') { if (typeof refreshMStats === 'function') { refreshMStats(); renderMList(window._mFilter || 'all'); } }
+  // FIX: On the manage page, refresh stats and list AFTER Supabase has loaded.
+  // This is the correct place — not inside initManage() which runs before the data arrives.
+  else if (page === 'manage') {
+    // Only refresh if the user is already logged in and the app is visible
+    if (sessionStorage.getItem('ki_auth') === '1' && document.getElementById('mApp').style.display !== 'none') {
+      refreshMStats();
+      renderMList(window._mFilter || 'all');
+    }
+  }
 }
 
 // ============================================================
@@ -972,7 +1003,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const page = document.body.dataset.page;
   if (page === 'manage') {
     initManage();
-    document.getElementById('mPass')?.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+    // FIX: Use window.doLogin to guarantee we reference the function defined above
+    document.getElementById('mPass')?.addEventListener('keydown', function(e) { if (e.key === 'Enter') window.doLogin(); });
   }
 
   document.querySelectorAll('.cart-btn').forEach(function(b) { b.addEventListener('click', openCart); });
