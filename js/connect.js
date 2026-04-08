@@ -16,6 +16,10 @@
   var SUPA_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 
+// ── BLOCK DEFAULT PRODUCTS IMMEDIATELY ──
+// Prevent main.js from rendering defaults while we load from Supabase
+window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
+   
   // ── Format a numeric price the way main.js expects ──
   // Keeps custom decimals (.95, .80 etc) — only adds .00 when whole number
   function fmtPrice(num) {
@@ -30,37 +34,34 @@
     return 'P' + parts[0] + '.' + parts[1];
   }
 
-  // ── Convert a Supabase row into the shape main.js expects ──
   function toKIProduct(row) {
-    var imgs = Array.isArray(row.images) ? row.images : [];
-    var mainImg = imgs[0] || '';
+  var imgs = Array.isArray(row.images) ? row.images : [];
+  var mainImg = imgs[0] || '';
 
-    // Price — preserve exact decimal, only auto-add .00 for whole numbers
-    var priceFormatted  = fmtPrice(row.price);
-    var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
+  // Price — preserve exact decimal, only auto-add .00 for whole numbers
+  var priceFormatted  = fmtPrice(row.price);
+  var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
 
-    // Featured / Special — STRICT: only true when the DB column is literally true
-    // This prevents default/demo products (featured:true) bleeding into real data
-    var isFeatured = row.featured === true || row.featured === 'true';
-    var isSpecial  = row.special  === true || row.special  === 'true';
+  // Featured / Special — ULTRA-STRICT: only true when EXACTLY boolean true
+  // Rejects: 'true', 'false', null, undefined, 0, 1, [], {}, anything else
+  var isFeatured = row.featured === true;  // Must be EXACTLY boolean true
+  var isSpecial  = row.special === true;   // Must be EXACTLY boolean true
 
-    return {
-      id:            row.id,
-      category:      row.category,
-      title:         row.title || '',
-      desc:          row.description || '',
-      // Pass pre-formatted strings so main.js productCardHTML() shows them directly
-      price:         priceFormatted,
-      originalPrice: origFormatted,
-      // Also pass raw number so main.js getProducts() mapper doesn't re-process
-      origPrice:     row.original_price ? Number(row.original_price) : null,
-      images:        imgs,
-      image:         mainImg,
-      featured:      isFeatured,
-      special:       isSpecial,
-      sortOrder:     row.sort_order || 0
-    };
-  }
+  return {
+    id:            row.id,
+    category:      row.category,
+    title:         row.title || '',
+    desc:          row.description || '',
+    price:         priceFormatted,
+    originalPrice: origFormatted,
+    origPrice:     row.original_price ? Number(row.original_price) : null,
+    images:        imgs,
+    image:         mainImg,
+    featured:      isFeatured,  // Will ONLY be true if DB value is boolean true
+    special:       isSpecial,   // Will ONLY be true if DB value is boolean true
+    sortOrder:     row.sort_order || 0
+  };
+}
 
   // ── Clear slider tracks so old default cards don't show alongside real ones ──
   function clearSliderTracks() {
