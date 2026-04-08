@@ -2,322 +2,636 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage — Kaushar Investment</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    body{background:var(--black);}
-    /* Prevent iOS zoom on input focus — keep font-size at least 16px */
-    .m-form-card input,
-    .m-form-card textarea,
-    .m-form-card select,
-    .m-settings-section input,
-    .m-settings-section textarea { font-size: 16px !important; }
-    body { touch-action: pan-x pan-y pinch-zoom; }
-    /* Login */
-    .m-login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
-    .m-login-box{background:var(--dark);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:44px 36px;width:100%;max-width:380px;text-align:center;}
-    .m-login-box .m-brand{font-size:12px;font-weight:800;color:var(--orange);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
-    .m-login-box h2{font-size:22px;font-weight:800;color:var(--white);margin-bottom:6px;}
-    .m-login-box p{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;}
-    .m-login-box .form-group{text-align:left;}
-    .m-login-err{font-size:13px;color:#f87171;margin-top:-10px;margin-bottom:14px;display:none;}
-    /* Header */
-    .m-header{background:var(--dark);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 24px;position:sticky;top:0;z-index:200;}
-    .m-header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
-    .m-brand-text{font-size:15px;font-weight:800;color:var(--white);}
-    .m-brand-text span{color:var(--orange);}
-    .m-header-right{display:flex;align-items:center;gap:14px;}
-    .m-header-right a{font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);text-decoration:none;}
-    .btn-logout{padding:8px 18px;background:transparent;border:1.5px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.5);font-family:'Open Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;}
-    .btn-logout:hover{border-color:#f87171;color:#f87171;}
-    /* App wrap */
-    .m-wrap{max-width:960px;margin:0 auto;padding:32px 24px 80px;}
-    /* Stats */
-    .m-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
-    .m-stat{background:var(--dark);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 18px;text-align:center;}
-    .m-stat span{display:block;font-size:32px;font-weight:800;color:var(--orange);line-height:1;margin-bottom:6px;}
-    .m-stat small{font-size:11px;color:rgba(255,255,255,0.4);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
-    /* Tabs */
-    .m-tabs{display:flex;gap:6px;margin-bottom:28px;border-bottom:2px solid rgba(255,255,255,0.07);padding-bottom:0;}
-    .m-tab-btn{padding:11px 20px;border:none;background:transparent;color:rgba(255,255,255,0.45);font-family:'Open Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:8px 8px 0 0;transition:all .2s;}
-    .m-tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);background:rgba(249,115,22,0.06);}
-    .m-tab-panel{display:none;}
-    .m-tab-panel.active{display:block;}
-    /* Form card */
-    .m-form-card{background:var(--dark);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px 28px;margin-bottom:28px;}
-    .m-form-card h3{font-size:17px;font-weight:800;color:var(--white);margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.07);}
-    /* Toggles */
-    .m-toggle-row{display:flex;align-items:center;gap:14px;margin-bottom:4px;}
-    .m-toggle-label{font-size:13px;color:rgba(255,255,255,0.55);}
-    /* Form actions */
-    .m-form-actions{display:flex;gap:12px;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;}
-    /* Settings section */
-    .m-settings-section{background:var(--dark);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:28px;margin-bottom:20px;}
-    .m-settings-section h4{font-size:15px;font-weight:800;color:var(--white);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.07);}
-    .m-cat-sub-item{margin-bottom:16px;}
-    .m-cat-sub-label{font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:block;}
-    .banner-preview-wrap{margin-top:12px;}
-    #mBannerPrev{width:100%;height:100px;object-fit:cover;border-radius:10px;display:none;margin-top:10px;border:1px solid rgba(255,255,255,0.1);}
-    @media(max-width:700px){
-      .m-stats{grid-template-columns:repeat(3,1fr);}
-      .m-form-card{padding:22px 16px;}
-      .m-settings-section{padding:20px 16px;}
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #111; color: #fff; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
+
+    /* ── LOGIN SCREEN ── */
+    #loginScreen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .login-box {
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;
+      padding: 48px 40px; width: 100%; max-width: 400px; text-align: center;
+    }
+    .login-brand { font-size: 12px; font-weight: 800; color: #f97316; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .login-box h2 { font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .login-box p { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 32px; }
+    .login-field { text-align: left; margin-bottom: 16px; }
+    .login-field label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+    .login-field input {
+      width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px;
+      color: #fff; font-size: 15px; font-family: inherit; outline: none; transition: border .2s;
+    }
+    .login-field input:focus { border-color: #f97316; }
+    .login-err { font-size: 13px; color: #f87171; margin-bottom: 14px; display: none; }
+    .btn-login {
+      width: 100%; padding: 14px; background: #f97316; border: none; border-radius: 10px;
+      color: #fff; font-size: 15px; font-weight: 800; font-family: inherit; cursor: pointer;
+      transition: background .2s; margin-top: 4px;
+    }
+    .btn-login:hover { background: #ea6c0a; }
+    .login-hint { font-size: 11px; color: rgba(255,255,255,0.2); margin-top: 20px; }
+
+    /* ── MANAGE APP ── */
+    #manageApp { display: none; }
+
+    /* ── HEADER ── */
+    .mg-header {
+      background: #1a1a1a; border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky; top: 0; z-index: 300; padding: 0 28px;
+    }
+    .mg-header-inner {
+      max-width: 1000px; margin: 0 auto; display: flex; align-items: center;
+      justify-content: space-between; height: 64px;
+    }
+    .mg-brand { font-size: 16px; font-weight: 800; color: #fff; }
+    .mg-brand span { color: #f97316; }
+    .mg-header-right { display: flex; align-items: center; gap: 16px; }
+    .mg-view-site {
+      font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.45);
+      text-decoration: none; transition: color .2s;
+    }
+    .mg-view-site:hover { color: #fff; }
+    .btn-logout {
+      padding: 8px 20px; background: transparent; border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 8px; color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-logout:hover { border-color: #f87171; color: #f87171; }
+
+    /* ── WRAP ── */
+    .mg-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 24px 80px; }
+
+    /* ── STATS ── */
+    .mg-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 32px; }
+    .mg-stat {
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 24px 16px; text-align: center;
+    }
+    .mg-stat-num { font-size: 36px; font-weight: 900; color: #f97316; line-height: 1; display: block; margin-bottom: 8px; }
+    .mg-stat-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: .6px; }
+
+    /* ── TABS ── */
+    .mg-tabs {
+      display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.07);
+      margin-bottom: 32px; overflow-x: auto; scrollbar-width: none;
+    }
+    .mg-tabs::-webkit-scrollbar { display: none; }
+    .mg-tab {
+      padding: 12px 22px; border: none; background: transparent;
+      color: rgba(255,255,255,0.4); font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+      white-space: nowrap; transition: all .2s;
+    }
+    .mg-tab:hover { color: rgba(255,255,255,0.75); }
+    .mg-tab.active { color: #f97316; border-bottom-color: #f97316; }
+
+    /* ── PANELS ── */
+    .mg-panel { display: none; }
+    .mg-panel.active { display: block; }
+
+    /* ── CARDS ── */
+    .mg-card {
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 28px; margin-bottom: 20px;
+    }
+    .mg-card-title {
+      font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 20px;
+      padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .mg-field { margin-bottom: 20px; }
+    .mg-label {
+      display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px;
+    }
+    .mg-label span { color: rgba(255,255,255,0.2); font-weight: 400; text-transform: none; font-size: 11px; letter-spacing: 0; }
+    .mg-input, .mg-textarea {
+      width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.1); border-radius: 10px;
+      color: #fff; font-size: 14px; font-family: inherit; outline: none;
+      transition: border .2s; resize: none;
+    }
+    .mg-input:focus, .mg-textarea:focus { border-color: #f97316; }
+    .mg-textarea { min-height: 110px; line-height: 1.6; white-space: pre-wrap; }
+    .mg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── IMAGE UPLOAD ZONE ── */
+    .mg-upload-zone {
+      border: 2px dashed rgba(249,115,22,0.4); border-radius: 12px;
+      padding: 28px 20px; text-align: center; cursor: pointer;
+      transition: all .2s; background: rgba(249,115,22,0.03);
+    }
+    .mg-upload-zone:hover, .mg-upload-zone.drag-over { border-color: #f97316; background: rgba(249,115,22,0.07); }
+    .mg-upload-zone svg { width: 36px; height: 36px; color: #f97316; margin-bottom: 10px; opacity: .7; }
+    .mg-upload-zone p { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.6); }
+    .mg-upload-zone small { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 4px; display: block; }
+    #imgFileInput { display: none; }
+
+    /* ── IMAGE PREVIEW GRID ── */
+    .mg-img-grid {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;
+    }
+    .mg-img-item {
+      position: relative; width: 88px; height: 88px; border-radius: 10px;
+      overflow: visible; cursor: grab; flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,0.1);
+      transition: border-color .2s;
+    }
+    .mg-img-item.dragging { opacity: .5; border-color: #f97316; cursor: grabbing; }
+    .mg-img-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; pointer-events: none; display: block; }
+    .mg-img-remove {
+      position: absolute; top: -8px; right: -8px; width: 22px; height: 22px;
+      background: #f87171; border: none; border-radius: 50%; color: #fff;
+      font-size: 13px; line-height: 22px; text-align: center; cursor: pointer;
+      font-weight: 800; z-index: 10; transition: background .2s;
+    }
+    .mg-img-remove:hover { background: #dc2626; }
+    .mg-img-badge {
+      position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+      background: #f97316; color: #fff; font-size: 9px; font-weight: 800;
+      padding: 2px 7px; border-radius: 20px; white-space: nowrap; letter-spacing: .4px;
+    }
+    .mg-uploading {
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(249,115,22,0.1); color: #f97316; font-size: 12px;
+      font-weight: 700; border-radius: 10px; padding: 8px 12px; margin-top: 10px;
+      gap: 8px;
+    }
+    .mg-uploading .spinner {
+      width: 14px; height: 14px; border: 2px solid rgba(249,115,22,0.3);
+      border-top-color: #f97316; border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CATEGORY PILLS ── */
+    .cat-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cat-pill {
+      padding: 8px 16px; border: 1.5px solid rgba(255,255,255,0.12); border-radius: 20px;
+      background: transparent; color: rgba(255,255,255,0.5); font-size: 13px;
+      font-weight: 700; font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .cat-pill:hover { border-color: rgba(249,115,22,0.5); color: rgba(255,255,255,0.8); }
+    .cat-pill.selected { background: #f97316; border-color: #f97316; color: #fff; }
+
+    /* ── TOGGLES ── */
+    .toggle-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .toggle-wrap { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+      border-radius: 13px; cursor: pointer; transition: background .2s;
+    }
+    .toggle-track::after {
+      content: ''; position: absolute; left: 3px; top: 3px;
+      width: 20px; height: 20px; background: #fff; border-radius: 50%;
+      transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.4);
+    }
+    .toggle-wrap input:checked + .toggle-track { background: #f97316; }
+    .toggle-wrap input:checked + .toggle-track::after { transform: translateX(20px); }
+    .toggle-label { font-size: 13px; color: rgba(255,255,255,0.55); }
+    .toggle-label strong { color: rgba(255,255,255,0.85); }
+
+    /* ── BUTTONS ── */
+    .btn-save {
+      padding: 14px 32px; background: #f97316; border: none; border-radius: 10px;
+      color: #fff; font-size: 14px; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: background .2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-save:hover { background: #ea6c0a; }
+    .btn-save:disabled { background: rgba(249,115,22,0.4); cursor: not-allowed; }
+    .btn-cancel {
+      padding: 14px 24px; background: transparent; border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px; color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-cancel:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+    .btn-delete-red {
+      padding: 8px 16px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 8px; color: #f87171; font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-delete-red:hover { background: rgba(248,113,113,0.2); border-color: #f87171; }
+    .btn-edit-outline {
+      padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-edit-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .form-actions { display: flex; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); flex-wrap: wrap; }
+
+    /* ── ALL PRODUCTS LIST ── */
+    .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .filter-pill {
+      padding: 6px 14px; border: 1.5px solid rgba(255,255,255,0.1); border-radius: 20px;
+      background: transparent; color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .filter-pill.active { background: #f97316; border-color: #f97316; color: #fff; }
+    .filter-pill:hover:not(.active) { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
+
+    .prod-list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+    }
+    .prod-list-header h3 { font-size: 15px; font-weight: 800; color: #fff; }
+    .drag-hint { font-size: 12px; color: rgba(255,255,255,0.25); margin-bottom: 14px; }
+
+    .prod-item {
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px; margin-bottom: 10px; transition: border-color .2s;
+    }
+    .prod-item:hover { border-color: rgba(255,255,255,0.12); }
+    .prod-item.dragging { opacity: .4; border-color: #f97316; }
+    .prod-drag { color: rgba(255,255,255,0.2); font-size: 18px; cursor: grab; padding: 4px; flex-shrink: 0; }
+    .prod-drag:active { cursor: grabbing; }
+    .prod-thumb {
+      width: 56px; height: 56px; border-radius: 8px; object-fit: cover;
+      background: rgba(255,255,255,0.05); flex-shrink: 0;
+    }
+    .prod-info { flex: 1; min-width: 0; }
+    .prod-title { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+    .prod-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .prod-price { font-size: 13px; color: rgba(255,255,255,0.5); }
+    .tag {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .tag-cat { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    .tag-featured { background: rgba(234,179,8,0.15); color: #fde047; }
+    .tag-special { background: rgba(249,115,22,0.2); color: #fb923c; }
+    .prod-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .no-products { text-align: center; padding: 48px 24px; color: rgba(255,255,255,0.3); font-size: 14px; }
+
+    /* ── SPECIALS SECTION ── */
+    .settings-label {
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.35);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; display: block;
+    }
+
+    /* ── BACKUP ── */
+    .backup-btn {
+      width: 100%; padding: 16px; background: #f97316; border: none; border-radius: 10px;
+      color: #fff; font-size: 15px; font-weight: 800; font-family: inherit;
+      cursor: pointer; transition: background .2s; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+    }
+    .backup-btn:hover { background: #ea6c0a; }
+    .restore-zone {
+      border: 2px dashed rgba(249,115,22,0.4); border-radius: 12px; padding: 32px;
+      text-align: center; cursor: pointer; transition: all .2s;
+    }
+    .restore-zone:hover { border-color: #f97316; background: rgba(249,115,22,0.04); }
+    .restore-zone p { font-size: 14px; font-weight: 700; color: #f97316; }
+    .restore-zone small { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 6px; display: block; }
+    .danger-card { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.15); }
+    .danger-card .mg-card-title { color: #f87171; border-bottom-color: rgba(248,113,113,0.15); }
+    .btn-danger-reset {
+      width: 100%; padding: 14px; background: transparent; border: 1.5px solid rgba(248,113,113,0.4);
+      border-radius: 10px; color: #f87171; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-danger-reset:hover { background: rgba(248,113,113,0.1); border-color: #f87171; }
+
+    /* ── TOAST ── */
+    .mg-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+      padding: 13px 22px; font-size: 14px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; gap: 10px; z-index: 9999;
+      opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none;
+      white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    .mg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .mg-toast.success { border-color: rgba(74,222,128,0.3); }
+    .mg-toast.error { border-color: rgba(248,113,113,0.3); }
+    .mg-toast .t-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ── LOADING OVERLAY ── */
+    .mg-loading {
+      position: fixed; inset: 0; background: rgba(17,17,17,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9998; opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .mg-loading.show { opacity: 1; pointer-events: all; }
+    .mg-loading-box { text-align: center; }
+    .mg-loading-box .big-spin {
+      width: 44px; height: 44px; border: 3px solid rgba(249,115,22,0.2);
+      border-top-color: #f97316; border-radius: 50%; animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    .mg-loading-box p { font-size: 13px; color: rgba(255,255,255,0.4); font-weight: 700; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .mg-wrap { padding: 20px 14px 60px; }
+      .mg-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .mg-stat { padding: 16px 10px; }
+      .mg-stat-num { font-size: 26px; }
+      .mg-row { grid-template-columns: 1fr; }
+      .mg-tabs { gap: 0; }
+      .mg-tab { padding: 10px 14px; font-size: 12px; }
+      .prod-item { flex-wrap: wrap; }
     }
   </style>
 </head>
-<body data-page="manage">
+<body>
 
-<!-- LOGIN -->
-<div id="mLoginScreen" class="m-login-wrap">
-  <div class="m-login-box">
-    <div class="m-brand">Kaushar Investment</div>
+<!-- ═══════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-brand">Kaushar Investment</div>
     <h2>Manage Store</h2>
     <p>Sign in to manage your products and settings</p>
-    <div class="form-group">
-      <label for="mPass">Password</label>
-      <input type="password" id="mPass" placeholder="Enter password" autocomplete="current-password">
+    <div class="login-field">
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
     </div>
-    <p class="m-login-err" id="mLoginErr">Incorrect password. Please try again.</p>
-    <button class="btn-admin-submit" style="width:100%" onclick="doLogin()">Sign In</button>
-    <p style="margin-top:20px;font-size:11px;color:rgba(255,255,255,0.2)">Default: <strong style="color:rgba(255,255,255,0.35)">-</strong> — </p>
+    <p class="login-err" id="loginErr">Incorrect password. Please try again.</p>
+    <button class="btn-login" id="loginBtn">Sign In</button>
+    <p class="login-hint">Default password: <strong style="color:rgba(255,255,255,0.35)">kaushar2026</strong></p>
   </div>
 </div>
 
-<!-- MANAGE APP -->
-<div id="mApp" style="display:none">
+<!-- ═══════════════════════════════════
+     MANAGE APP
+═══════════════════════════════════ -->
+<div id="manageApp">
 
-  <header class="m-header">
-    <div class="m-header-inner">
-      <span class="m-brand-text">Kaushar <span>Manage</span></span>
-      <div class="m-header-right">
-        <a href="index.html" target="_blank">View Site ↗</a>
-        <button class="btn-logout" onclick="doLogout()">Logout</button>
+  <!-- Header -->
+  <header class="mg-header">
+    <div class="mg-header-inner">
+      <span class="mg-brand">Kaushar <span>Manage</span></span>
+      <div class="mg-header-right">
+        <a href="index.html" target="_blank" class="mg-view-site">View Site ↗</a>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
       </div>
     </div>
   </header>
 
-  <div class="m-wrap">
+  <div class="mg-wrap">
 
     <!-- Stats -->
-    <div class="m-stats">
-      <div class="m-stat"><span id="mStat1">0</span><small>Total Products</small></div>
-      <div class="m-stat"><span id="mStat2">0</span><small>Featured</small></div>
-      <div class="m-stat"><span id="mStat3">0</span><small>On Special</small></div>
+    <div class="mg-stats">
+      <div class="mg-stat"><span class="mg-stat-num" id="statTotal">0</span><span class="mg-stat-label">Total Products</span></div>
+      <div class="mg-stat"><span class="mg-stat-num" id="statFeatured">0</span><span class="mg-stat-label">Featured</span></div>
+      <div class="mg-stat"><span class="mg-stat-num" id="statSpecial">0</span><span class="mg-stat-label">On Special</span></div>
     </div>
 
     <!-- Tabs -->
-    <div class="m-tabs">
-      <button class="m-tab-btn active" onclick="switchMTab('add')">＋ Add Product</button>
-      <button class="m-tab-btn" onclick="switchMTab('list')">All Products</button>
-      <button class="m-tab-btn" onclick="switchMTab('specials')">Specials Section</button>
-      <button class="m-tab-btn" onclick="switchMTab('cats')">Categories</button>
-      <button class="m-tab-btn" onclick="switchMTab('backup')">🔒 Backup</button>
+    <div class="mg-tabs">
+      <button class="mg-tab active" data-tab="add">＋ Add Product</button>
+      <button class="mg-tab" data-tab="list">All Products</button>
+      <button class="mg-tab" data-tab="specials">Specials Section</button>
+      <button class="mg-tab" data-tab="categories">Categories</button>
+      <button class="mg-tab" data-tab="backup">🔒 Backup</button>
     </div>
 
     <!-- ── TAB: ADD PRODUCT ── -->
-    <div class="m-tab-panel active" id="mPanel_add">
-      <div class="m-form-card">
-        <h3 id="mFormHead">Add New Product</h3>
+    <div class="mg-panel active" id="panel-add">
+
+      <div class="mg-card">
+        <div class="mg-card-title" id="formHeading">Add New Product</div>
+        <input type="hidden" id="editingId">
 
         <!-- Images -->
-        <div class="form-group">
-          <label>Product Images <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(up to 8 — first is the main image)</span></label>
-          <div class="img-upload-zone" id="mUploadZone">
-            <input type="file" id="mImgInput" accept="image/*" multiple>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <p><strong>Tap to upload images</strong> or drag &amp; drop</p>
-            <p style="font-size:12px;margin-top:6px">JPG, PNG, WEBP — works from phone gallery or laptop</p>
+        <div class="mg-field">
+          <label class="mg-label">Product Images <span>(tap to add — first image is the main display image. Drag to reorder.)</span></label>
+          <div class="mg-upload-zone" id="uploadZone">
+            <input type="file" id="imgFileInput" accept="image/*" multiple>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <p>Tap to upload images</p>
+            <small>JPG, PNG, WEBP — no limit — works from gallery or files</small>
           </div>
-          <div class="img-preview-grid" id="mImgGrid"></div>
+          <div id="uploadingBar" style="display:none" class="mg-uploading">
+            <div class="spinner"></div>
+            <span id="uploadingText">Uploading images…</span>
+          </div>
+          <div class="mg-img-grid" id="imgGrid"></div>
         </div>
 
         <!-- Title -->
-        <div class="form-group">
-          <label for="mTitle">Product Title *</label>
-          <input type="text" id="mTitle" placeholder="e.g. Heavy Duty Angle Grinder 850W" maxlength="100">
+        <div class="mg-field">
+          <label class="mg-label" for="fieldTitle">Product Title *</label>
+          <input type="text" class="mg-input" id="fieldTitle" placeholder="e.g. Heavy Duty Angle Grinder 850W" maxlength="120">
         </div>
 
         <!-- Description -->
-        <div class="form-group">
-          <label for="mDesc">Description *</label>
-          <textarea id="mDesc" placeholder="Full product description. This shows in the product popup when clicked."></textarea>
+        <div class="mg-field">
+          <label class="mg-label" for="fieldDesc">Description * <span>(line breaks are preserved — write each spec on its own line)</span></label>
+          <textarea class="mg-textarea" id="fieldDesc" placeholder="e.g.&#10;Colour: Red&#10;Power: 850W&#10;Weight: 2.3kg&#10;&#10;Full product description here..." style="min-height:140px"></textarea>
         </div>
 
-        <!-- Price row -->
-        <div class="form-row">
-          <div class="form-group">
-            <label for="mPrice">Price * <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(just type the number — P and .00 added automatically)</span></label>
-            <input type="text" id="mPrice" placeholder="e.g. 850 or 850.95">
+        <!-- Prices -->
+        <div class="mg-row">
+          <div class="mg-field">
+            <label class="mg-label" for="fieldPrice">Price * <span>(just type the number — P added automatically)</span></label>
+            <input type="text" class="mg-input" id="fieldPrice" placeholder="e.g. 850 or 850.95">
           </div>
-          <div class="form-group">
-            <label for="mOrigPrice">Original Price <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(only if on special)</span></label>
-            <input type="text" id="mOrigPrice" placeholder="e.g. 1100">
+          <div class="mg-field">
+            <label class="mg-label" for="fieldOrigPrice">Original Price <span>(optional — shows as "was" price when on special)</span></label>
+            <input type="text" class="mg-input" id="fieldOrigPrice" placeholder="e.g. 1100">
           </div>
         </div>
 
         <!-- Category -->
-        <div class="form-group">
-          <label>Category *</label>
+        <div class="mg-field">
+          <label class="mg-label">Category *</label>
           <div class="cat-pills">
-            <button type="button" class="cat-pill m-cat-pill" data-cat="hardware">Hardware</button>
-            <button type="button" class="cat-pill m-cat-pill" data-cat="electronics">Electronics</button>
-            <button type="button" class="cat-pill m-cat-pill" data-cat="outdoor">Outdoor &amp; Camp</button>
-            <button type="button" class="cat-pill m-cat-pill" data-cat="household">Household</button>
-            <button type="button" class="cat-pill m-cat-pill" data-cat="vehicle">Vehicle Accessories</button>
+            <button type="button" class="cat-pill" data-cat="hardware">Hardware</button>
+            <button type="button" class="cat-pill" data-cat="electronics">Electronics</button>
+            <button type="button" class="cat-pill" data-cat="household">Household</button>
+            <button type="button" class="cat-pill" data-cat="outdoor">Outdoor / Camp</button>
+            <button type="button" class="cat-pill" data-cat="vehicle">Vehicle Accessories</button>
           </div>
         </div>
 
-        <!-- Featured & Special toggles -->
-        <div class="form-group">
-          <label>Product Flags</label>
-          <div class="m-toggle-row">
-            <label class="toggle-switch"><input type="checkbox" id="mFeatured"><span class="toggle-track"></span></label>
-            <span class="m-toggle-label">⭐ Show in <strong>Featured</strong> section on homepage</span>
+        <!-- Toggles -->
+        <div class="mg-field">
+          <label class="mg-label">Product Flags</label>
+          <div class="toggle-row">
+            <label class="toggle-wrap">
+              <input type="checkbox" id="toggleFeatured">
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">⭐ Show in <strong>Featured</strong> section on homepage</span>
           </div>
-          <div class="m-toggle-row" style="margin-top:12px">
-            <label class="toggle-switch"><input type="checkbox" id="mSpecial"><span class="toggle-track"></span></label>
-            <span class="m-toggle-label">🔥 Show in <strong>On Special</strong> section on homepage</span>
+          <div class="toggle-row">
+            <label class="toggle-wrap">
+              <input type="checkbox" id="toggleSpecial">
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">🔥 Show in <strong>On Special</strong> section on homepage</span>
           </div>
         </div>
 
-        <div class="m-form-actions">
-          <button class="btn-admin-submit" onclick="submitMProduct()">Save Product</button>
-          <button class="btn-admin-cancel" id="mCancelEdit" style="display:none" onclick="clearMForm()">Cancel Edit</button>
-          <button class="btn-admin-cancel" onclick="clearMForm()">Clear</button>
+        <!-- Actions -->
+        <div class="form-actions">
+          <button class="btn-save" id="saveProductBtn">Save Product</button>
+          <button class="btn-cancel" id="cancelEditBtn" style="display:none">Cancel Edit</button>
+          <button class="btn-cancel" id="clearFormBtn">Clear Form</button>
         </div>
       </div>
-    </div>
 
-    <!-- ── TAB: PRODUCT LIST ── -->
-    <div class="m-tab-panel" id="mPanel_list">
-      <div class="admin-header-bar">
-        <h3 style="font-size:15px;font-weight:800;color:var(--white);margin:0">All Products</h3>
-        <div class="admin-filter-pills">
-          <button class="admin-filter-pill m-filter-pill active" onclick="filterMList('all',this)">All</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('featured',this)">Featured</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('special',this)">Special</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('hardware',this)">Hardware</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('electronics',this)">Electronics</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('outdoor',this)">Outdoor</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('household',this)">Household</button>
-          <button class="admin-filter-pill m-filter-pill" onclick="filterMList('vehicle',this)">Vehicle</button>
-        </div>
+    </div><!-- /panel-add -->
+
+    <!-- ── TAB: ALL PRODUCTS ── -->
+    <div class="mg-panel" id="panel-list">
+      <div class="prod-list-header">
+        <h3>All Products</h3>
       </div>
-      <p style="font-size:12px;color:rgba(255,255,255,0.3);margin:10px 0 16px">Hold the <strong style="color:rgba(255,255,255,0.5)">⠿</strong> handle and drag up/down to reorder products.</p>
-      <div class="admin-product-list" id="mProdList"></div>
-    </div>
+      <div class="filter-pills" id="filterPills">
+        <button class="filter-pill active" data-filter="all">All</button>
+        <button class="filter-pill" data-filter="featured">Featured</button>
+        <button class="filter-pill" data-filter="special">Special</button>
+        <button class="filter-pill" data-filter="hardware">Hardware</button>
+        <button class="filter-pill" data-filter="electronics">Electronics</button>
+        <button class="filter-pill" data-filter="outdoor">Outdoor</button>
+        <button class="filter-pill" data-filter="household">Household</button>
+        <button class="filter-pill" data-filter="vehicle">Vehicle</button>
+      </div>
+      <p class="drag-hint">Hold the ⠿ handle and drag up/down to reorder products.</p>
+      <div id="productList"></div>
+    </div><!-- /panel-list -->
 
     <!-- ── TAB: SPECIALS SECTION ── -->
-    <div class="m-tab-panel" id="mPanel_specials">
-      <div class="m-settings-section">
-        <h4>🔥 On Special Section Text</h4>
-        <div class="form-group">
-          <label for="mSpecTitle">Section Title <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(the full heading e.g. "On Special" or "Weekly Deals")</span></label>
-          <input type="text" id="mSpecTitle" placeholder="On Special" maxlength="40">
+    <div class="mg-panel" id="panel-specials">
+      <div class="mg-card">
+        <div class="mg-card-title">🔥 On Special Section Text</div>
+        <div class="mg-field">
+          <label class="mg-label settings-label">Section Title <span style="font-size:11px;color:rgba(255,255,255,0.2);text-transform:none">(the full heading e.g. "On Special" or "Weekly Deals")</span></label>
+          <input type="text" class="mg-input" id="specTitle" placeholder="On Special" maxlength="60">
         </div>
-        <div class="form-group">
-          <label for="mSpecSub">Subtitle text</label>
-          <input type="text" id="mSpecSub" placeholder="Selected products at reduced prices — while stock lasts." maxlength="120">
+        <div class="mg-field">
+          <label class="mg-label settings-label">Subtitle Text</label>
+          <input type="text" class="mg-input" id="specSubtitle" placeholder="Selected products at reduced prices — while stock lasts." maxlength="160">
         </div>
+        <button class="btn-save" id="saveSpecialsBtn">Save Specials Settings</button>
       </div>
 
-      <div class="m-settings-section">
-        <h4>Banner Image Bar <span style="font-size:12px;color:rgba(255,255,255,0.3);font-weight:400">(optional thin image bar that appears just above the specials slider)</span></h4>
-        <div class="m-toggle-row">
-          <label class="toggle-switch"><input type="checkbox" id="mBannerOn" onchange="toggleMBanner()"><span class="toggle-track"></span></label>
-          <span class="m-toggle-label">Show the banner image bar above specials</span>
+      <div class="mg-card">
+        <div class="mg-card-title">Banner Image Bar <span style="font-size:13px;font-weight:400;color:rgba(255,255,255,0.3)">(optional thin image bar above specials slider)</span></div>
+        <div class="toggle-row" style="margin-bottom:20px">
+          <label class="toggle-wrap">
+            <input type="checkbox" id="bannerEnabled">
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Show the banner image bar above specials</span>
         </div>
-        <div id="mBannerImgWrap" style="display:none;margin-top:18px">
-          <div class="form-group">
-            <label>Banner Image <span style="color:rgba(255,255,255,0.3);font-weight:400;text-transform:none">(image will auto-fit the bar width)</span></label>
-            <div class="img-upload-zone" style="padding:18px 16px" onclick="document.getElementById('mBannerFile').click()">
-              <input type="file" id="mBannerFile" accept="image/*" style="display:none" onchange="handleMBannerUpload(this)">
-              <p><strong>Tap to upload banner image</strong></p>
-            </div>
-            <div class="banner-preview-wrap">
-              <img id="mBannerPrev" src="" alt="Banner Preview">
-            </div>
+        <div id="bannerImgWrap" style="display:none">
+          <label class="mg-label settings-label">Banner Image <span style="font-size:11px;color:rgba(255,255,255,0.2);text-transform:none">(image will auto-fit the bar width)</span></label>
+          <div class="mg-upload-zone" id="bannerUploadZone" style="padding:18px">
+            <input type="file" id="bannerFileInput" accept="image/*" style="display:none">
+            <p style="font-size:13px">Tap to upload banner image</p>
           </div>
+          <img id="bannerPreview" src="" alt="Banner" style="display:none;width:100%;max-height:100px;object-fit:cover;border-radius:10px;margin-top:12px;border:1px solid rgba(255,255,255,0.1)">
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn-save" id="saveBannerBtn">Save Banner Settings</button>
         </div>
       </div>
-
-      <button class="btn-admin-submit" onclick="saveMSettings()">Save Specials Settings</button>
-    </div>
+    </div><!-- /panel-specials -->
 
     <!-- ── TAB: CATEGORIES ── -->
-    <div class="m-tab-panel" id="mPanel_cats">
-      <div class="m-settings-section">
-        <h4>Category Page Subtitles</h4>
-        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px">Edit the keyword text shown below each category page title. Each category has its own separate text.</p>
+    <div class="mg-panel" id="panel-categories">
+      <div class="mg-card">
+        <div class="mg-card-title">Category Page Subtitles</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:24px">Edit the keyword text shown below each category page title.</p>
 
-        <div class="m-cat-sub-item">
-          <span class="m-cat-sub-label">🔧 Hardware</span>
-          <input type="text" class="form-group input" id="mCSub_hardware" placeholder="Angle Grinder | Blower | Drilling Tools | Marble Cutter | Hammer..." style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:inherit;font-size:13px;box-sizing:border-box;">
+        <div class="mg-field">
+          <label class="mg-label">🔧 Hardware</label>
+          <input type="text" class="mg-input" id="catSub_hardware" placeholder="Angle Grinder | Blower | Drilling Tools | Marble Cutter | Hammer…">
         </div>
-        <div class="m-cat-sub-item">
-          <span class="m-cat-sub-label">📺 Electronics</span>
-          <input type="text" id="mCSub_electronics" placeholder="LED TV | Bluetooth Speaker | CCTV Camera | Solar Panel | Inverter..." style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:inherit;font-size:13px;box-sizing:border-box;">
+        <div class="mg-field">
+          <label class="mg-label">📺 Electronics</label>
+          <input type="text" class="mg-input" id="catSub_electronics" placeholder="LED TV | Bluetooth Speaker | CCTV Camera | Solar Panel | Inverter…">
         </div>
-        <div class="m-cat-sub-item">
-          <span class="m-cat-sub-label">🏕️ Outdoor &amp; Camp</span>
-          <input type="text" id="mCSub_outdoor" placeholder="Tent | Camping Chair | Cooler Box | Braai Stand | Gas Stove..." style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:inherit;font-size:13px;box-sizing:border-box;">
+        <div class="mg-field">
+          <label class="mg-label">🏕️ Outdoor &amp; Camp</label>
+          <input type="text" class="mg-input" id="catSub_outdoor" placeholder="Tent | Camping Chair | Cooler Box | Braai Stand | Gas Stove…">
         </div>
-        <div class="m-cat-sub-item">
-          <span class="m-cat-sub-label">🏠 Household</span>
-          <input type="text" id="mCSub_household" placeholder="Cookware Set | Air Fryer | Kettle | Blender | Vacuum Cleaner | Fan..." style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:inherit;font-size:13px;box-sizing:border-box;">
+        <div class="mg-field">
+          <label class="mg-label">🏠 Household</label>
+          <input type="text" class="mg-input" id="catSub_household" placeholder="Cookware Set | Air Fryer | Kettle | Blender | Vacuum Cleaner…">
         </div>
-        <div class="m-cat-sub-item">
-          <span class="m-cat-sub-label">🚗 Vehicle Accessories</span>
-          <input type="text" id="mCSub_vehicle" placeholder="Jump Starter | Dash Camera | Car Mount | Tyre Inflator | Seat Cover..." style="width:100%;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px;color:var(--white);font-family:inherit;font-size:13px;box-sizing:border-box;">
+        <div class="mg-field">
+          <label class="mg-label">🚗 Vehicle Accessories</label>
+          <input type="text" class="mg-input" id="catSub_vehicle" placeholder="Jump Starter | Dash Camera | Car Mount | Tyre Inflator | Seat Cover…">
         </div>
+
+        <button class="btn-save" id="saveCatsBtn">Save Category Settings</button>
       </div>
-      <button class="btn-admin-submit" onclick="saveMSettings()">Save Category Settings</button>
-    </div>
+    </div><!-- /panel-categories -->
 
-    <!-- ── TAB: BACKUP & RESTORE ── -->
-    <div class="m-tab-panel" id="mPanel_backup">
-      <div class="m-settings-section">
-        <h4>🔒 Backup Your Products</h4>
-        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
+    <!-- ── TAB: BACKUP ── -->
+    <div class="mg-panel" id="panel-backup">
+
+      <div class="mg-card">
+        <div class="mg-card-title">🔒 Backup Your Products</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;line-height:1.7">
           Download a backup file of all your current products. Keep this file somewhere safe (Google Drive, phone, email to yourself). If anything ever goes wrong and products disappear, you can restore from this file instantly.
         </p>
-        <button class="btn-admin-submit" onclick="doBackupDownload()" style="margin-bottom:12px;width:100%">
-          ⬇ Download Backup File
+        <button class="backup-btn" id="downloadBackupBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:20px;height:20px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Backup File
         </button>
-        <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center">Saves as a .json file — do not edit it manually</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.2);text-align:center;margin-top:12px">Saves as a .json file — do not edit it manually</p>
       </div>
 
-      <div class="m-settings-section" style="margin-top:16px">
-        <h4>🔁 Restore Products from Backup</h4>
-        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
+      <div class="mg-card">
+        <div class="mg-card-title">📦 Restore Products from Backup</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;line-height:1.7">
           If your products ever disappear, upload your backup file here to restore everything exactly as it was — all products, images, categories, featured and special flags.
         </p>
-        <div class="img-upload-zone" style="padding:20px" onclick="document.getElementById('backupFileInput').click()">
-          <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="doBackupRestore(this)">
-          <p><strong>Tap to upload backup file</strong></p>
-          <p style="font-size:12px;margin-top:6px;color:rgba(255,255,255,0.35)">.json files only</p>
+        <div class="restore-zone" id="restoreZone">
+          <input type="file" id="restoreFileInput" accept=".json" style="display:none">
+          <p>Tap to upload backup file</p>
+          <small>.json files only</small>
         </div>
-        <div id="backupRestoreStatus" style="margin-top:14px;font-size:13px;color:rgba(255,255,255,0.4);text-align:center"></div>
       </div>
 
-      <div class="m-settings-section" style="margin-top:16px;border:1px solid rgba(239,68,68,0.25)">
-        <h4 style="color:#f87171">⚠️ Emergency: Restore Default Products</h4>
-        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;line-height:1.6">
-          Only use this if you have no backup file and need to start fresh with the demo products. <strong style="color:#f87171">This will replace all current products.</strong>
+      <div class="mg-card danger-card">
+        <div class="mg-card-title">⚠️ Emergency: Restore Default Products</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;line-height:1.7">
+          Only use this if you have no backup file and need to start fresh with the demo products.
+          <strong style="color:#f87171"> This will replace all current products.</strong>
         </p>
-        <button class="btn-admin-delete" style="width:100%;padding:14px;font-size:14px" onclick="doRestoreDefaults()">
-          Reset to Default Demo Products
-        </button>
+        <button class="btn-danger-reset" id="resetDefaultsBtn">Reset to Default Demo Products</button>
       </div>
-    </div>
 
-  </div><!-- /.m-wrap -->
-</div><!-- /#mApp -->
+    </div><!-- /panel-backup -->
 
-<div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="js/main.js"></script>
+  </div><!-- /.mg-wrap -->
+</div><!-- /#manageApp -->
+
+<!-- Toast -->
+<div class="mg-toast" id="mgToast"></div>
+
+<!-- Loading overlay -->
+<div class="mg-loading" id="mgLoading">
+  <div class="mg-loading-box">
+    <div class="big-spin"></div>
+    <p id="loadingText">Loading…</p>
+  </div>
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/manage.js"></script>
 </body>
 </html>
