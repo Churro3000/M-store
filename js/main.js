@@ -3,32 +3,54 @@
    ============================================================ */
 'use strict';
 
-// ── Block F12 / DevTools ──
+// -- Block F12 / DevTools --
 document.addEventListener('keydown', function(e) {
   if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C','U'].includes(e.key.toUpperCase())) || (e.ctrlKey && e.key.toUpperCase() === 'U')) {
     e.preventDefault(); return false;
   }
 });
 document.addEventListener('contextmenu', function(e) {
-  // Only block right-click on images to prevent saving, allow text copy menu everywhere else
+  // Only block right-click on images, allow copy/paste/select on text
   if (e.target.tagName === 'IMG') { e.preventDefault(); return false; }
 });
 
-// ── Supabase Config ──
+// -- Supabase Config --
 const SUPABASE_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const WA_NUMBER = '26771665187';
 
-// ── Product Storage — Supabase is source of truth, localStorage is cache ──
-// FIX: Use undefined (not null) as "not yet loaded" sentinel.
-// null was used as both "not loaded" and a valid empty state, causing
-// getProducts() to return stale [] permanently once Supabase set it to [].
+// -- Product Storage --
+// undefined = not yet loaded from Supabase
+// [] = loaded, genuinely empty
+// [...] = loaded with products
 let _cachedProducts = undefined;
 
 function getProducts() {
-  // FIX: Only return cache when it has been explicitly populated (not undefined)
+  // -- products.js is the primary source of truth --
+  // If window.KI_PRODUCTS is defined (from products.js), always use it.
+  // This means you just edit products.js and it appears on the site immediately.
+  if (window.KI_PRODUCTS && Array.isArray(window.KI_PRODUCTS) && window.KI_PRODUCTS.length > 0) {
+    return window.KI_PRODUCTS.map(function(p, i) {
+      var cats = Array.isArray(p.category) ? p.category : [p.category];
+      var mainCat = cats.find(function(c) { return ['hardware','electronics','household','outdoor','vehicle'].includes(c); }) || cats[0];
+      return {
+        id: p.id || (mainCat.slice(0,2) + i),
+        category: mainCat,
+        title: p.title || '',
+        desc: p.desc || '',
+        price: p.price ? 'P' + Number(p.price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 'P0.00',
+        originalPrice: p.origPrice ? 'P' + Number(p.origPrice).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : null,
+        image: (p.images && p.images[0]) ? p.images[0] : '',
+        images: p.images || [],
+        featured: !!p.featured,
+        special: !!p.special,
+        sortOrder: p.sortOrder !== undefined ? p.sortOrder : i
+      };
+    });
+  }
+  // -- Fallback: use cached Supabase data or localStorage --
   if (_cachedProducts !== undefined) return _cachedProducts;
   try {
     const local = JSON.parse(localStorage.getItem('ki_products') || 'null');
@@ -40,13 +62,11 @@ function getProducts() {
 function saveProducts(products) {
   _cachedProducts = products;
   localStorage.setItem('ki_products', JSON.stringify(products));
-  // Use upsert with a fixed id=1 row — eliminates the race condition where
-  // concurrent select→insert/update calls created duplicate rows and lost data
   var data = JSON.stringify(products);
+  // Use upsert with fixed id=1 row to avoid duplicates
   _sb.from('products').upsert({ id: 1, data: data }, { onConflict: 'id' }).then(function(r) {
     if (r.error) {
-      console.warn('Supabase save failed:', r.error);
-      // If upsert fails (e.g. id column not numeric), fall back to the old pattern once
+      // Fallback: try select then update or insert
       _sb.from('products').select('id').limit(1).then(function(res) {
         if (res.data && res.data.length > 0) {
           _sb.from('products').update({ data: data }).eq('id', res.data[0].id).then(function(r2) {
@@ -132,7 +152,6 @@ function escHtml(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Formats description preserving line breaks
 function fmtDesc(s) {
   return escHtml(String(s || '')).replace(/\n/g, '<br>');
 }
@@ -151,10 +170,7 @@ function addToCart(product) {
 
 function removeFromCart(id, skipConfirm) {
   const isMobile = window.innerWidth <= 900;
-  if (isMobile && !skipConfirm) {
-    showCartConfirm(id);
-    return;
-  }
+  if (isMobile && !skipConfirm) { showCartConfirm(id); return; }
   cart = cart.filter(function(i) { return i.id !== id; });
   saveCart();
   updateCartUI();
@@ -166,8 +182,7 @@ function showCartConfirm(id) {
   const ov = document.createElement('div');
   ov.id = 'cartConfirmOv';
   ov.className = 'cart-confirm-overlay';
-  ov.innerHTML = '<div class="cart-confirm-box">' +
-    '<p>Remove this item from your cart?</p>' +
+  ov.innerHTML = '<div class="cart-confirm-box"><p>Remove this item from your cart?</p>' +
     '<div class="cart-confirm-actions">' +
     '<button class="btn-confirm-cancel" onclick="document.getElementById(\'cartConfirmOv\').remove()">Cancel</button>' +
     '<button class="btn-confirm-remove" onclick="forceRemoveFromCart(\'' + id + '\')">Remove</button>' +
@@ -268,7 +283,7 @@ function productCardHTML(p) {
 }
 
 // ============================================================
-// PRODUCT SLIDER — true 1:1 finger tracking, no bounce
+// PRODUCT SLIDER
 // ============================================================
 function buildSlider(wrapperId, products) {
   const wrap = document.getElementById(wrapperId);
@@ -483,23 +498,28 @@ function initHamburger() {
 const MANAGE_PASS = 'vita6';
 let _mImgs = [], _mCat = '', _mEditId = null;
 
+// -- initManage: called once on DOMContentLoaded on the manage page --
+// It only sets up the login screen or shows the app shell.
+// It does NOT load product data or call renderMList/refreshMStats.
+// Those are called by refreshCurrentPage() after Supabase responds.
 function initManage() {
   if (sessionStorage.getItem('ki_auth') !== '1') {
     document.getElementById('mLoginScreen').style.display = 'flex';
     document.getElementById('mApp').style.display = 'none';
     return;
   }
-  // FIX: Don't call showMApp() here — Supabase hasn't loaded yet.
-  // showMApp() will be called by refreshCurrentPage() once loadProductsFromSupabase() finishes.
-  // Just show the app shell and init the form so it's ready.
+  // Already logged in — show the app shell and init the form
+  // But do NOT render product list yet — Supabase hasn't loaded yet at this point
   document.getElementById('mLoginScreen').style.display = 'none';
   document.getElementById('mApp').style.display = 'block';
   loadMSettings();
   initMForm();
+  // Show a loading state in the list until Supabase responds
+  const list = document.getElementById('mProdList');
+  if (list) list.innerHTML = '<div class="admin-empty" style="color:rgba(255,255,255,0.3)">Loading products...</div>';
 }
 
-// FIX: Expose doLogin on window immediately (not inside DOMContentLoaded)
-// so the onclick attribute in HTML and the Enter-key listener both find it.
+// -- doLogin: exposed on window immediately so onclick and keydown both find it --
 window.doLogin = function() {
   const passEl = document.getElementById('mPass');
   const errEl = document.getElementById('mLoginErr');
@@ -510,8 +530,8 @@ window.doLogin = function() {
     document.getElementById('mApp').style.display = 'block';
     loadMSettings();
     initMForm();
-    // FIX: After login, products may already be loaded (Supabase callback
-    // already fired). Refresh stats and list immediately.
+    // Products are already loaded by this point (Supabase fired before login)
+    // so we can render immediately
     refreshMStats();
     renderMList(window._mFilter || 'all');
   } else {
@@ -525,15 +545,6 @@ window.doLogout = function() {
   document.getElementById('mApp').style.display = 'none';
   document.getElementById('mLoginScreen').style.display = 'flex';
 };
-
-function showMApp() {
-  document.getElementById('mLoginScreen').style.display = 'none';
-  document.getElementById('mApp').style.display = 'block';
-  refreshMStats();
-  renderMList(window._mFilter || 'all');
-  loadMSettings();
-  initMForm();
-}
 
 function refreshMStats() {
   const p = getProducts();
@@ -603,11 +614,7 @@ function initDrag(list) {
       function mm(ev) {
         const items = [...list.querySelectorAll('.admin-product-item:not(.dragging)')];
         let near = null, d = 9999;
-        items.forEach(function(it) {
-          const r = it.getBoundingClientRect();
-          const dist = Math.abs(r.top + r.height / 2 - ev.clientY);
-          if (dist < d) { d = dist; near = it; }
-        });
+        items.forEach(function(it) { const r = it.getBoundingClientRect(); const dist = Math.abs(r.top + r.height / 2 - ev.clientY); if (dist < d) { d = dist; near = it; } });
         if (near) { const r = near.getBoundingClientRect(); if (ev.clientY < r.top + r.height / 2) list.insertBefore(dragEl, near); else list.insertBefore(dragEl, near.nextSibling); }
       }
       function mu() {
@@ -618,25 +625,15 @@ function initDrag(list) {
       document.addEventListener('mousemove', mm);
       document.addEventListener('mouseup', mu);
     });
-    h.addEventListener('touchstart', function(e) {
-      dragEl = h.closest('.admin-product-item');
-      dragEl.classList.add('dragging');
-      e.stopPropagation();
-    }, { passive: true });
-    h.addEventListener('touchend', function() {
-      if (dragEl) { dragEl.classList.remove('dragging'); saveDrag(list); dragEl = null; }
-    }, { passive: true });
+    h.addEventListener('touchstart', function(e) { dragEl = h.closest('.admin-product-item'); dragEl.classList.add('dragging'); e.stopPropagation(); }, { passive: true });
+    h.addEventListener('touchend', function() { if (dragEl) { dragEl.classList.remove('dragging'); saveDrag(list); dragEl = null; } }, { passive: true });
   });
   list.addEventListener('touchmove', function(e) {
     if (!dragEl) return;
     const t = e.touches[0];
     const items = [...list.querySelectorAll('.admin-product-item:not(.dragging)')];
     let near = null, d = 9999;
-    items.forEach(function(it) {
-      const r = it.getBoundingClientRect();
-      const dist = Math.abs(r.top + r.height / 2 - t.clientY);
-      if (dist < d) { d = dist; near = it; }
-    });
+    items.forEach(function(it) { const r = it.getBoundingClientRect(); const dist = Math.abs(r.top + r.height / 2 - t.clientY); if (dist < d) { d = dist; near = it; } });
     if (near) { const r = near.getBoundingClientRect(); if (t.clientY < r.top + r.height / 2) list.insertBefore(dragEl, near); else list.insertBefore(dragEl, near.nextSibling); }
   }, { passive: true });
 }
@@ -676,17 +673,15 @@ window.mDelete = function(id) {
   showToast('Product deleted', 'error');
 };
 
-// ── FIX: initMForm uses a flag on the elements themselves so listeners
-//    are only ever attached once, no matter how many times it is called.
+// -- initMForm: uses _kiListened flags on elements to prevent duplicate listeners --
+// Safe to call multiple times — only attaches once per element
 function initMForm() {
   const zone = document.getElementById('mUploadZone');
   const inp = document.getElementById('mImgInput');
 
-  // Guard: only attach listeners once per element lifetime
   if (zone && !zone._kiListened) {
     zone._kiListened = true;
     zone.addEventListener('click', function(e) {
-      // Don't re-open picker when the click came FROM the input itself
       if (e.target === inp) return;
       inp && inp.click();
     });
@@ -697,7 +692,6 @@ function initMForm() {
 
   if (inp && !inp._kiListened) {
     inp._kiListened = true;
-    // Stop input click from bubbling to zone (prevents re-opening picker after selection)
     inp.addEventListener('click', function(e) { e.stopPropagation(); });
     inp.addEventListener('change', function(e) { addMFiles(Array.from(e.target.files)); e.target.value = ''; });
   }
@@ -803,9 +797,7 @@ window.submitMProduct = function() {
   const origPrice = origRaw ? formatPrice(origRaw) : null;
   const fb = 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&q=80';
   const imgs = _mImgs.length ? _mImgs : [fb];
-  // FIX: Always get a fresh copy of products at submit time — never rely
-  // on a stale local variable. This ensures new products append to the
-  // real Supabase-loaded list, not to an empty or outdated cache.
+  // Always get a fresh copy from cache — never from a local variable that could be stale
   const products = getProducts();
   if (_mEditId) {
     const idx = products.findIndex(function(p) { return p.id === _mEditId; });
@@ -818,6 +810,7 @@ window.submitMProduct = function() {
   }
   saveProducts(products);
   clearMForm();
+  // Update count and list immediately after save
   refreshMStats();
   renderMList(window._mFilter || 'all');
 };
@@ -939,10 +932,16 @@ window.doRestoreDefaults = function() {
 // SUPABASE — load products on startup
 // ============================================================
 function loadProductsFromSupabase() {
+  // -- If products.js is loaded, skip Supabase entirely --
+  // Products are read directly from window.KI_PRODUCTS by getProducts().
+  if (window.KI_PRODUCTS && window.KI_PRODUCTS.length > 0) {
+    refreshCurrentPage();
+    return;
+  }
+  // -- No products.js — fall back to Supabase --
   _sb.from('products').select('data').order('id', { ascending: false }).limit(1).then(function(res) {
     if (res.error) {
       console.warn('Supabase load failed:', res.error);
-      // FIX: Only fall back to localStorage/defaults if cache is still empty
       if (_cachedProducts === undefined) {
         var local = null;
         try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
@@ -954,7 +953,7 @@ function loadProductsFromSupabase() {
     if (res.data && res.data.length > 0 && res.data[0].data) {
       try {
         var products = JSON.parse(res.data[0].data);
-        if (products && products.length > 0) {
+        if (products && Array.isArray(products) && products.length > 0) {
           _cachedProducts = products;
           localStorage.setItem('ki_products', JSON.stringify(products));
           refreshCurrentPage();
@@ -962,7 +961,6 @@ function loadProductsFromSupabase() {
         }
       } catch(e) {}
     }
-    // Supabase returned no data — fall back to localStorage or defaults
     var local = null;
     try { local = JSON.parse(localStorage.getItem('ki_products') || 'null'); } catch(e) {}
     _cachedProducts = (local && local.length) ? local : DEFAULT_PRODUCTS;
@@ -979,11 +977,9 @@ function refreshCurrentPage() {
   else if (page === 'outdoor') { renderCategoryProducts('outdoor'); initCategorySearch('outdoor'); }
   else if (page === 'household') { renderCategoryProducts('household'); initCategorySearch('household'); }
   else if (page === 'vehicle') { renderCategoryProducts('vehicle'); initCategorySearch('vehicle'); }
-  // FIX: On the manage page, refresh stats and list AFTER Supabase has loaded.
-  // This is the correct place — not inside initManage() which runs before the data arrives.
   else if (page === 'manage') {
-    // Only refresh if the user is already logged in and the app is visible
-    if (sessionStorage.getItem('ki_auth') === '1' && document.getElementById('mApp').style.display !== 'none') {
+    // Only refresh if logged in and app is visible
+    if (sessionStorage.getItem('ki_auth') === '1' && document.getElementById('mApp') && document.getElementById('mApp').style.display !== 'none') {
       refreshMStats();
       renderMList(window._mFilter || 'all');
     }
@@ -998,13 +994,15 @@ document.addEventListener('DOMContentLoaded', function() {
   initHamburger();
   initHeroSlider();
 
+  // Load from Supabase — refreshCurrentPage() will render once data arrives
   loadProductsFromSupabase();
 
   const page = document.body.dataset.page;
   if (page === 'manage') {
     initManage();
-    // FIX: Use window.doLogin to guarantee we reference the function defined above
-    document.getElementById('mPass')?.addEventListener('keydown', function(e) { if (e.key === 'Enter') window.doLogin(); });
+    document.getElementById('mPass')?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') window.doLogin();
+    });
   }
 
   document.querySelectorAll('.cart-btn').forEach(function(b) { b.addEventListener('click', openCart); });
