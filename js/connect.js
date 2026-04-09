@@ -16,9 +16,9 @@
   var SUPA_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 
-// ── BLOCK DEFAULT PRODUCTS IMMEDIATELY ──
-// Prevent main.js from rendering defaults while we load from Supabase
-window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
+  // ── BLOCK DEFAULT PRODUCTS IMMEDIATELY ──
+  // Prevent main.js from rendering defaults while we load from Supabase
+  window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
    
   // ── Format a numeric price the way main.js expects ──
   // Keeps custom decimals (.95, .80 etc) — only adds .00 when whole number
@@ -129,6 +129,21 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
       });
   }
 
+  // ── SPECIALS SECTION VISIBILITY CONTROL ──
+  // Hides/shows the entire "On Special" section based on management toggle
+  function applySpecialsSectionVisibility(settings) {
+    var specialsEnabled = settings['specials_section_enabled'] !== 'false'; // Default ON
+    var specialsSection = document.getElementById('specialsSection');
+    
+    if (specialsSection) {
+      if (specialsEnabled) {
+        specialsSection.style.display = 'block';
+      } else {
+        specialsSection.style.display = 'none';
+      }
+    }
+  }
+
   // ── Apply settings from Supabase to the page ──
   function applySettings(s) {
     var st = document.getElementById('specialSectionTitle');
@@ -156,6 +171,32 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
     applySpecialsSectionVisibility(s);  // Control entire specials section visibility
   }
 
+  // ── FORCE FEATURED SECTION TO SHOW TITLE/DESC ──
+  // Overrides any CSS that might be hiding them
+  function forceFeaturedVisibility() {
+    setTimeout(function() {
+      var featuredSlider = document.getElementById('featuredSlider');
+      if (!featuredSlider) return;
+      
+      var cards = featuredSlider.querySelectorAll('.product-card');
+      cards.forEach(function(card) {
+        var title = card.querySelector('.product-card-title');
+        var desc = card.querySelector('.product-card-desc');
+        
+        if (title) {
+          title.style.display = 'block';
+          title.style.visibility = 'visible';
+          title.style.opacity = '1';
+        }
+        if (desc) {
+          desc.style.display = 'block';
+          desc.style.visibility = 'visible';
+          desc.style.opacity = '1';
+        }
+      });
+    }, 100);
+  }
+
   // ── Tell main.js to re-render now that KI_PRODUCTS is populated ──
   function triggerRender() {
     var page = document.body ? document.body.dataset.page : null;
@@ -163,6 +204,7 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
     try {
       if (page === 'home' && typeof initHomePage === 'function') {
         initHomePage();
+        forceFeaturedVisibility();  // Force title/desc to show in featured section
       } else if (typeof renderCategoryProducts === 'function') {
         var cats = ['hardware','electronics','outdoor','household','vehicle'];
         if (cats.indexOf(page) !== -1) {
@@ -192,21 +234,3 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
   }
 
 })();
-
-// ── SPECIALS SECTION VISIBILITY CONTROL ──
-  // Hides/shows the entire "On Special" section based on management toggle
-  function applySpecialsSectionVisibility(settings) {
-    var specialsEnabled = settings['specials_section_enabled'] === 'true';
-    var specialsSection = document.getElementById('specialsSection');
-    
-    if (specialsSection) {
-      if (specialsEnabled) {
-        specialsSection.style.display = 'block';
-      } else {
-        specialsSection.style.display = 'none';
-      }
-    }
-  }
-
-  // ── UPDATE: Modify the existing applySettings function ──
-  // Find the existing applySettings function and add one line at the end
