@@ -50,8 +50,8 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
   return {
     id:            row.id,
     category:      row.category,
-    title:         row.title || '',
-    desc:          row.description || '',
+    title:         String(row.title || '').trim() || 'Product details available on inquiry.',
+    desc:          String(row.description || '').trim() || 'Product details available on inquiry.',
     price:         priceFormatted,
     originalPrice: origFormatted,
     origPrice:     row.original_price ? Number(row.original_price) : null,
