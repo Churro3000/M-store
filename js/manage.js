@@ -10,7 +10,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 // ── Constants ──
-const MANAGE_PASS = 'kaushar2026';
+const MANAGE_PASS = 'vita6';
 const STORAGE_BUCKET = 'product-images'; // Supabase storage bucket name
 
 // ── State ──
