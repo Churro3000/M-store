@@ -525,6 +525,9 @@ async function loadSpecialsSettings(settings) {
     prev.src = settings['special_banner_image'];
     prev.style.display = 'block';
   }
+  // Specials section visibility toggle
+  const sectionEnabled = settings['specials_section_enabled'] !== 'false'; // Default ON
+  document.getElementById('specialsSectionEnabled').checked = sectionEnabled;
 }
 
 async function saveSpecials() {
@@ -532,6 +535,7 @@ async function saveSpecials() {
   try {
     await saveSetting('special_title', document.getElementById('specTitle').value.trim() || 'On Special');
     await saveSetting('special_subtitle', document.getElementById('specSubtitle').value.trim() || 'Selected products at reduced prices — while stock lasts.');
+    await saveSetting('specials_section_enabled', String(document.getElementById('specialsSectionEnabled').checked));
     hideLoading();
     toast('Specials settings saved!');
   } catch (e) {
