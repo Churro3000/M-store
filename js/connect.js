@@ -137,6 +137,36 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
     }
   }
 
+   // ── SPECIALS SECTION VISIBILITY CONTROL ── newwwwwwwwwwwwwwwwwwwwww
+  // Hides/shows the entire "On Special" section based on management toggle
+  function applySpecialsSectionVisibility(settings) {
+    var specialsEnabled = settings['specials_section_enabled'] !== 'false'; // Default ON
+    var specialsSection = document.getElementById('specialsSection');
+    
+    if (specialsSection) {
+      if (specialsEnabled) {
+        specialsSection.style.display = 'block';
+      } else {
+        specialsSection.style.display = 'none';
+      }
+    }
+
+    // Banner visibility
+    var bannerWrap = document.getElementById('specialBannerWrap');
+    if (bannerWrap) {
+      var bannerEnabled = settings['special_banner_enabled'] === 'true';
+      var bannerImage = settings['special_banner_image'];
+      
+      if (bannerEnabled && bannerImage) {
+        bannerWrap.style.display = 'block';
+        var bannerImg = bannerWrap.querySelector('img');
+        if (bannerImg) bannerImg.src = bannerImage;
+      } else {
+        bannerWrap.style.display = 'none';
+      }
+    }
+  }  //---------------new
+
   // ── Tell main.js to re-render now that KI_PRODUCTS is populated ──
   function triggerRender() {
     var page = document.body ? document.body.dataset.page : null;
