@@ -16,9 +16,9 @@
   var SUPA_URL = 'https://rcssxrhxxvacrhvqkgdv.supabase.co';
   var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjc3N4cmh4eHZhY3JodnFrZ2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTQwODgsImV4cCI6MjA5MDg5MDA4OH0.TPEdtDJZa5IVcl_Hy0USI1uD_IC3BFN3zOzHV4RgVps';
 
-  // ── BLOCK DEFAULT PRODUCTS IMMEDIATELY ──
-  // Prevent main.js from rendering defaults while we load from Supabase
-  window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
+// ── BLOCK DEFAULT PRODUCTS IMMEDIATELY ──
+// Prevent main.js from rendering defaults while we load from Supabase
+window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
    
   // ── Format a numeric price the way main.js expects ──
   // Keeps custom decimals (.95, .80 etc) — only adds .00 when whole number
@@ -35,50 +35,33 @@
   }
 
   function toKIProduct(row) {
-    var imgs = Array.isArray(row.images) ? row.images : [];
-    var mainImg = imgs[0] || '';
+  var imgs = Array.isArray(row.images) ? row.images : [];
+  var mainImg = imgs[0] || '';
 
-    // Price — preserve exact decimal, only auto-add .00 for whole numbers
-    var priceFormatted  = fmtPrice(row.price);
-    var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
+  // Price — preserve exact decimal, only auto-add .00 for whole numbers
+  var priceFormatted  = fmtPrice(row.price);
+  var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
 
-    // Featured / Special — ULTRA-STRICT: only true when EXACTLY boolean true
-    // Rejects: 'true', 'false', null, undefined, 0, 1, [], {}, anything else
-    var isFeatured = row.featured === true;  // Must be EXACTLY boolean true
-    var isSpecial  = row.special === true;   // Must be EXACTLY boolean true
+  // Featured / Special — ULTRA-STRICT: only true when EXACTLY boolean true
+  // Rejects: 'true', 'false', null, undefined, 0, 1, [], {}, anything else
+  var isFeatured = row.featured === true;  // Must be EXACTLY boolean true
+  var isSpecial  = row.special === true;   // Must be EXACTLY boolean true
 
-    // ── ULTRA-STRICT TITLE & DESCRIPTION ──
-    // Multiple fallback layers to GUARANTEE non-empty strings
-    var rawTitle = row.title;
-    var rawDesc = row.description;
-    
-    // Force to string, trim whitespace, check if actually has content
-    var cleanTitle = (rawTitle !== null && rawTitle !== undefined) ? String(rawTitle).trim() : '';
-    var cleanDesc = (rawDesc !== null && rawDesc !== undefined) ? String(rawDesc).trim() : '';
-    
-    // Final guaranteed values - CANNOT be empty
-    var safeTitle = cleanTitle.length > 0 ? cleanTitle : 'Untitled Product';
-    var safeDesc = cleanDesc.length > 0 ? cleanDesc : 'No description available.';
-    
-    // EXTRA PARANOID CHECK: If somehow still empty, force defaults
-    if (!safeTitle || safeTitle.length === 0) safeTitle = 'Product';
-    if (!safeDesc || safeDesc.length === 0) safeDesc = 'Contact us for details.';
-
-    return {
-      id:            row.id,
-      category:      row.category,
-      title:         safeTitle,        // GUARANTEED non-empty - quadruple-checked
-      desc:          safeDesc,         // GUARANTEED non-empty - quadruple-checked
-      price:         priceFormatted,
-      originalPrice: origFormatted,
-      origPrice:     row.original_price ? Number(row.original_price) : null,
-      images:        imgs,
-      image:         mainImg,
-      featured:      isFeatured,       // ONLY true if DB = boolean true
-      special:       isSpecial,        // ONLY true if DB = boolean true
-      sortOrder:     row.sort_order || 0
-    };
-  }
+  return {
+    id:            row.id,
+    category:      row.category,
+    title:         String(row.title || '').trim() || 'Product details available on inquiry.',
+    desc:          String(row.description || '').trim() || 'Product details available on inquiry.',
+    price:         priceFormatted,
+    originalPrice: origFormatted,
+    origPrice:     row.original_price ? Number(row.original_price) : null,
+    images:        imgs,
+    image:         mainImg,
+    featured:      isFeatured,  // Will ONLY be true if DB value is boolean true
+    special:       isSpecial,   // Will ONLY be true if DB value is boolean true
+    sortOrder:     row.sort_order || 0
+  };
+}
 
   // ── Clear slider tracks so old default cards don't show alongside real ones ──
   function clearSliderTracks() {
@@ -129,21 +112,6 @@
       });
   }
 
-  // ── SPECIALS SECTION VISIBILITY CONTROL ──
-  // Hides/shows the entire "On Special" section based on management toggle
-  function applySpecialsSectionVisibility(settings) {
-    var specialsEnabled = settings['specials_section_enabled'] !== 'false'; // Default ON
-    var specialsSection = document.getElementById('specialsSection');
-    
-    if (specialsSection) {
-      if (specialsEnabled) {
-        specialsSection.style.display = 'block';
-      } else {
-        specialsSection.style.display = 'none';
-      }
-    }
-  }
-
   // ── Apply settings from Supabase to the page ──
   function applySettings(s) {
     var st = document.getElementById('specialSectionTitle');
@@ -167,34 +135,6 @@
     if (sub && page && s['cat_subtitle_' + page]) {
       sub.textContent = s['cat_subtitle_' + page];
     }
-
-    applySpecialsSectionVisibility(s);  // Control entire specials section visibility
-  }
-
-  // ── FORCE FEATURED SECTION TO SHOW TITLE/DESC ──
-  // Overrides any CSS that might be hiding them
-  function forceFeaturedVisibility() {
-    setTimeout(function() {
-      var featuredSlider = document.getElementById('featuredSlider');
-      if (!featuredSlider) return;
-      
-      var cards = featuredSlider.querySelectorAll('.product-card');
-      cards.forEach(function(card) {
-        var title = card.querySelector('.product-card-title');
-        var desc = card.querySelector('.product-card-desc');
-        
-        if (title) {
-          title.style.display = 'block';
-          title.style.visibility = 'visible';
-          title.style.opacity = '1';
-        }
-        if (desc) {
-          desc.style.display = 'block';
-          desc.style.visibility = 'visible';
-          desc.style.opacity = '1';
-        }
-      });
-    }, 100);
   }
 
   // ── Tell main.js to re-render now that KI_PRODUCTS is populated ──
@@ -204,7 +144,6 @@
     try {
       if (page === 'home' && typeof initHomePage === 'function') {
         initHomePage();
-        forceFeaturedVisibility();  // Force title/desc to show in featured section
       } else if (typeof renderCategoryProducts === 'function') {
         var cats = ['hardware','electronics','outdoor','household','vehicle'];
         if (cats.indexOf(page) !== -1) {
