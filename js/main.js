@@ -479,7 +479,12 @@ function initHomePage() {
   buildSlider('specialSlider', specials);
 }
 
-function viewAllProducts() { window.location.href = 'hardware.html'; }
+function viewAllProducts() { window.location.href = 'hardware.html'; 
+
+// INITIALIZE SPECIALS SECTION /////////////////////////////////////////////////////new
+  if (typeof window.initSpecialsSection === 'function') {
+    window.initSpecialsSection(); ///////////////////////////////////////////new
+}
 
 // ============================================================
 // HAMBURGER
