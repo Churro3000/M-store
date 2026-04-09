@@ -35,33 +35,50 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
   }
 
   function toKIProduct(row) {
-  var imgs = Array.isArray(row.images) ? row.images : [];
-  var mainImg = imgs[0] || '';
+    var imgs = Array.isArray(row.images) ? row.images : [];
+    var mainImg = imgs[0] || '';
 
-  // Price — preserve exact decimal, only auto-add .00 for whole numbers
-  var priceFormatted  = fmtPrice(row.price);
-  var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
+    // Price — preserve exact decimal, only auto-add .00 for whole numbers
+    var priceFormatted  = fmtPrice(row.price);
+    var origFormatted   = row.original_price ? fmtPrice(row.original_price) : null;
 
-  // Featured / Special — ULTRA-STRICT: only true when EXACTLY boolean true
-  // Rejects: 'true', 'false', null, undefined, 0, 1, [], {}, anything else
-  var isFeatured = row.featured === true;  // Must be EXACTLY boolean true
-  var isSpecial  = row.special === true;   // Must be EXACTLY boolean true
+    // Featured / Special — ULTRA-STRICT: only true when EXACTLY boolean true
+    // Rejects: 'true', 'false', null, undefined, 0, 1, [], {}, anything else
+    var isFeatured = row.featured === true;  // Must be EXACTLY boolean true
+    var isSpecial  = row.special === true;   // Must be EXACTLY boolean true
 
-  return {
-    id:            row.id,
-    category:      row.category,
-    title:         String(row.title || '').trim() || 'Untitled Product',
-    desc:          String(row.description || '').trim() || 'No description available.',
-    price:         priceFormatted,
-    originalPrice: origFormatted,
-    origPrice:     row.original_price ? Number(row.original_price) : null,
-    images:        imgs,
-    image:         mainImg,
-    featured:      isFeatured,  // Will ONLY be true if DB value is boolean true
-    special:       isSpecial,   // Will ONLY be true if DB value is boolean true
-    sortOrder:     row.sort_order || 0
-  };
-}
+    // ── ULTRA-STRICT TITLE & DESCRIPTION ──
+    // Multiple fallback layers to GUARANTEE non-empty strings
+    var rawTitle = row.title;
+    var rawDesc = row.description;
+    
+    // Force to string, trim whitespace, check if actually has content
+    var cleanTitle = (rawTitle !== null && rawTitle !== undefined) ? String(rawTitle).trim() : '';
+    var cleanDesc = (rawDesc !== null && rawDesc !== undefined) ? String(rawDesc).trim() : '';
+    
+    // Final guaranteed values - CANNOT be empty
+    var safeTitle = cleanTitle.length > 0 ? cleanTitle : 'Untitled Product';
+    var safeDesc = cleanDesc.length > 0 ? cleanDesc : 'No description available.';
+    
+    // EXTRA PARANOID CHECK: If somehow still empty, force defaults
+    if (!safeTitle || safeTitle.length === 0) safeTitle = 'Product';
+    if (!safeDesc || safeDesc.length === 0) safeDesc = 'Contact us for details.';
+
+    return {
+      id:            row.id,
+      category:      row.category,
+      title:         safeTitle,        // GUARANTEED non-empty - quadruple-checked
+      desc:          safeDesc,         // GUARANTEED non-empty - quadruple-checked
+      price:         priceFormatted,
+      originalPrice: origFormatted,
+      origPrice:     row.original_price ? Number(row.original_price) : null,
+      images:        imgs,
+      image:         mainImg,
+      featured:      isFeatured,       // ONLY true if DB = boolean true
+      special:       isSpecial,        // ONLY true if DB = boolean true
+      sortOrder:     row.sort_order || 0
+    };
+  }
 
   // ── Clear slider tracks so old default cards don't show alongside real ones ──
   function clearSliderTracks() {
