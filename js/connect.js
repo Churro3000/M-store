@@ -152,6 +152,8 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
     if (sub && page && s['cat_subtitle_' + page]) {
       sub.textContent = s['cat_subtitle_' + page];
     }
+
+    applySpecialsSectionVisibility(s);  // Control entire specials section visibility
   }
 
   // ── Tell main.js to re-render now that KI_PRODUCTS is populated ──
@@ -190,3 +192,21 @@ window.KI_PRODUCTS = null;  // Signal to main.js: "data not ready yet"
   }
 
 })();
+
+// ── SPECIALS SECTION VISIBILITY CONTROL ──
+  // Hides/shows the entire "On Special" section based on management toggle
+  function applySpecialsSectionVisibility(settings) {
+    var specialsEnabled = settings['specials_section_enabled'] === 'true';
+    var specialsSection = document.getElementById('specialsSection');
+    
+    if (specialsSection) {
+      if (specialsEnabled) {
+        specialsSection.style.display = 'block';
+      } else {
+        specialsSection.style.display = 'none';
+      }
+    }
+  }
+
+  // ── UPDATE: Modify the existing applySettings function ──
+  // Find the existing applySettings function and add one line at the end
